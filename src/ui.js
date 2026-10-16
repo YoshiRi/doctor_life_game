@@ -144,44 +144,48 @@
   function chronicle(){return `<section class="panel"><div class="section-label">YOUR CHRONICLE</div><h2>これまでに起きたこと</h2>${state.logs.slice(0,10).map(l=>`<div class="logline ${esc(l.type)}"><div><div class="logdate">${esc(l.period)}</div><div class="logtitle">${esc(l.title)}</div>${l.detail?`<div class="logdesc">${esc(l.detail)}</div>`:''}</div></div>`).join('')||'<div class="empty">まだ何も起きていません。</div>'}</section>`}
   function gameplay(){const p=DoctoralGame.profile(state),month=state.month,completion=Math.round(Math.max(0,Math.min(100,month/36*100)));return frame(`<section class="chapter-head"><div class="chapter-title"><div class="kicker">COHORT 2027 / ${esc(p.university.region.toUpperCase())}</div><h1>${esc(DoctoralGame.date(state))} <span class="chip">${state.finished?'完了':state.pending?'イベント発生中':'進行中'}</span></h1><div class="chapter-subtitle">${esc(p.field.name)} / ${esc(p.university.name)} / ${esc(p.advisor.name)}の指導</div></div><div class="small-note">SEED #${state.seed}<br>学位取得想定：D3末</div></section><div class="time-track"><div class="time-progress" style="width:${completion}%"></div></div>${autoPanel()}<section class="metric-grid">${metric('研究進捗',Math.round(state.research),'%',`目標 ${p.university.researchRequirement}%`,state.research,'')}${metric('査読採択論文',state.papers,'本',`必要 ${p.university.paperRequirement}本`,state.papers/p.university.paperRequirement*100,'gold')}${metric('現金残高',fmt(state.cash),'万円','生活費を確保',Math.max(0,Math.min(100,state.cash/70*100)),'')}${metric('精神的余裕',Math.round(state.morale),'%',state.morale<40?'注意が必要':'研究生活の状態',state.morale,state.morale<40?'red':'')}</section><main class="main-grid"><div class="left-stack">${story()}${state.finished?'':actionPanel()}${chronicle()}</div><aside class="aside-stack">${persona()}${finance()}${queued()}</aside></main><div class="watermark">SIMULATED LIFE — 仮モデルの確率で生成された架空の人生です</div>`)}
   function initialReport(){
-    const d=InitialReport.build(state),money=d.income,range=32;
+    const d=InitialReport.build(state),money=d.income,reference=d.reference,range=32;
     const moneyBar=(label,value,type)=>`<div class="initial-money-row"><div class="initial-money-label"><span>${esc(label)}</span><strong>${Number(value).toFixed(1)} 万円/月</strong></div><div class="initial-track"><div class="initial-fill ${type}" style="width:${Math.max(0,Math.min(100,value/range*100))}%"></div></div></div>`;
-    const histogram=(items,value,max)=>`<div class="initial-histogram" role="img" aria-label="ゲーム内の仮分布。選択された値 ${value}">${items.map((item,i)=>`<div class="initial-hist-item ${value===i?'current':''}"><div class="initial-hist-percent">${item}%</div><div class="initial-hist-pillar" style="height:${Math.max(5,item/max*100)}%"></div><span>${i===2&&items.length===3?'2':' '+i}</span></div>`).join('')}</div>`;
-    const master=d.lab.master,doctor=d.lab.doctor,faculty=d.lab.faculty;
-    const split=[{value:master,label:'修士',kind:'masters'},{value:doctor,label:'博士',kind:'doctors'},{value:faculty,label:'教員',kind:'faculty'}];
+    const observedBar=(name,pct,detail='')=>`<div class="statrow"><div class="statrow-head"><span>${esc(name)}</span><strong>${pct.toFixed(1)}%</strong></div><div class="statrow-track"><div class="statrow-fill" style="width:${pct}%"></div></div>${detail?`<small>${esc(detail)}</small>`:''}</div>`;
+    const publicationBars=reference.publications.bins.map(b=>`<div class="statrow compact"><div class="statrow-head"><span>${esc(b.label)}</span><strong>${b.pct.toFixed(1)}% <small>(${b.count.toLocaleString('ja-JP')}人)</small></strong></div><div class="statrow-track"><div class="statrow-fill" style="width:${b.pct/30*100}%"></div></div></div>`).join('');
+    const grantBars=reference.grants.types.map(g=>`<div class="statrow"><div class="statrow-head"><span>${esc(g.label)}　<small>平均直接経費 ${g.meanManYen.toLocaleString('ja-JP')}万円</small></span><strong>${g.accepted.toLocaleString('ja-JP')}件</strong></div><div class="statrow-track"><div class="statrow-fill" style="width:${g.accepted/reference.grants.types[0].accepted*100}%"></div></div></div>`).join('');
+    const memberParts=[{key:'faculty',name:'教員',css:'faculty'},{key:'postdoc',name:'PD',css:'postdoc'},{key:'doctor',name:'博士',css:'doctor'},{key:'master',name:'修士',css:'master'},{key:'undergrad',name:'学部',css:'undergrad'},{key:'assistant',name:'補助等',css:'assistant'}];
+    const labBars=reference.laboratories.kinds.map(kind=>`<div class="ref-lab-row"><div class="statrow-head"><strong>${esc(kind.label)}</strong><span>平均 ${kind.total.toFixed(1)}人</span></div><div class="ref-lab-stack" role="img" aria-label="${esc(kind.label)}の実測平均人数。${memberParts.map(p=>p.name+kind[p.key]+'人').join('、')}">${memberParts.map(part=>`<div class="ref-lab-segment ${part.css}" style="width:${kind[part.key]/kind.total*100}%" title="${esc(part.name)} ${kind[part.key]}人"></div>`).join('')}</div></div>`).join('');
+    const citation=(source)=>`<a class="initial-source-link" href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">出典：${esc(source.title)}（${esc(source.location)}） ↗</a>`;
     return frame(`<div class="initial-report">
       <div class="initial-heading"><div><div class="kicker">YOUR STARTING HAND / ${esc(d.period)}</div><h1>あなたの研究人生は<br><em>ここから始まる。</em></h1><p>${esc(d.field)}・${esc(d.university)}（${esc(d.region)}） / SEED #${d.seed}</p></div>
         <div class="initial-heading-actions"><span class="initial-tag">初期条件レポート</span><button class="primary" data-do="intro-next">${state.introSeen===false?'この人生を始める →':'ゲームへ戻る →'}</button></div></div>
-      <p class="initial-lead">最初に配られた条件を可視化しました。<strong>実測統計</strong>と<strong>ゲーム内の仮設定</strong>は、出典・対象集団を明示して区別しています。</p>
+      <p class="initial-lead">あなたの条件は<strong>ゲームの設定</strong>、下の比較グラフは<strong>公表された実測値</strong>です。対象者と測定時期が一致しない場合は、順位や上位何％とは表示しません。</p>
       <main class="initial-grid">
-        <section class="initial-card" aria-label="開始時の収入と生活費"><div class="initial-card-heading"><div><div class="section-label">01 / MONEY</div><h2>収入と生活費</h2></div><span class="initial-source-tag assumed">ゲームの仮設定</span></div>
-          <div class="initial-big-number">${money.total}<small>万円 / 月・見込み収入</small></div>
+        <section class="initial-card" aria-label="開始時の収入と生活費"><div class="initial-card-heading"><div><div class="section-label">01 / MONEY</div><h2>収入と生活費</h2></div><span class="initial-source-tag assumed">自分の条件は仮設定</span></div>
+          <div class="initial-big-number">${money.total}<small>万円 / 月・ゲーム内収入</small></div>
           ${moneyBar('家庭からの援助',money.family,'family')}${moneyBar(d.stage==='M2'?'修士の想定収入':'博士の短時間勤務',money.work,'work')}${moneyBar('生活費（授業料等を除く）',money.cost,'expense')}
           <p class="initial-balance ${money.balance<0?'negative':''}">月次収支の目安 <strong>${money.balance>0?'+':''}${money.balance} 万円</strong> ／ 初期現金 ${money.startingCash} 万円</p>
-          <div class="initial-reference"><span class="initial-source-tag observed">実測・2024年度JASSO</span><strong>博士一般学生の平均年間収入 <b>266.5万円</b></strong><div class="initial-ref-track">参考月換算 約${money.observedMean.toFixed(1)}万円（貸与奨学金などを含む）</div><small>全年次の平均で、M2や新入生の分布・順位ではありません。ゲームの収入内訳とは定義も異なります。</small></div>
-          <a class="initial-source-link" href="${esc(d.jasso.url)}" target="_blank" rel="noopener noreferrer">出典：JASSO 学生生活調査 2024年度（大学院試行） ↗</a>
+          <div class="initial-reference"><span class="initial-source-tag observed">実測 / JASSO 2024</span><strong>一般の博士学生・平均年間収入：${(reference.income.annualMeanYen/10000).toFixed(1)}万円</strong><small>支援の受給割合（複数回答）</small>
+          ${reference.income.support.map(item=>observedBar(item.label,item.pct)).join('')}
+          <small>${esc(reference.income.note)}ゲーム内の初期収入と定義が異なるため、順位判定はしていません。</small></div>
+          ${citation(reference.income)}
         </section>
-        <section class="initial-card" aria-label="修士までの論文実績"><div class="initial-card-heading"><div><div class="section-label">02 / OUTPUT</div><h2>修士までの研究実績</h2></div><span class="initial-source-tag assumed">仮分布</span></div>
-          <div class="initial-big-number">${d.papers.value}<small>本相当の実績指標</small></div>
-          ${histogram(d.papers.distribution,d.papers.value,60)}
-          <div class="initial-legend"><span>初期値 0 / 1 / 2 相当</span><b>選ばれた値を強調</b></div>
-          <p class="initial-card-note">${esc(d.papers.description)}割合（60 / 30 / 10%）はゲーム内の抽選重みです。修士学生の出版実績についての実測分布ではありません。</p>
+        <section class="initial-card" aria-label="研究実績と博士課程修了者の参考統計"><div class="initial-card-heading"><div><div class="section-label">02 / OUTPUT</div><h2>研究実績と公開統計</h2></div><span class="initial-source-tag observed">実測 / NISTEP</span></div>
+          <div class="initial-big-number">${d.papers.value}<small>本相当・あなたの初期ゲーム指標</small></div>
+          <p class="initial-card-note">${esc(d.papers.description)}</p>
+          <div class="initial-reference"><strong>博士課程修了者の論文発表本数（2012年度修了者）</strong><small>n=4,353、無回答も含む。ここは上のゲーム指標とは別の母集団・定義です。</small><div class="initial-statlist">${publicationBars}</div><small>${esc(reference.publications.note)}</small></div>
+          ${citation(reference.publications)}
         </section>
-        <section class="initial-card" aria-label="研究室の科研費と予算レベル"><div class="initial-card-heading"><div><div class="section-label">03 / GRANT</div><h2>研究室の研究資金</h2></div><span class="initial-source-tag assumed">仮分布</span></div>
-          <div class="initial-big-number">${d.grant.budgetLevel}<small> / 4 研究室予算ポイント</small></div>
-          ${histogram([33,33,34],Math.max(0,Math.min(2,d.grant.budgetLevel)),34)}
-          <div class="initial-legend"><span>初期抽選でのポイント 0 / 1 / 2</span><b>各 約1/3</b></div>
-          <p class="initial-card-note">${esc(d.grant.description)}実際の資金額・採択率・研究室内配分の分布はまだゲームへ接続していません。</p>
-          <a class="initial-source-link" href="${esc(d.kakenUrl)}" target="_blank" rel="noopener noreferrer">参考データソース：KAKEN 科研費データベース ↗</a>
+        <section class="initial-card" aria-label="研究費に関する科研費統計"><div class="initial-card-heading"><div><div class="section-label">03 / GRANT</div><h2>研究資金と科研費</h2></div><span class="initial-source-tag observed">実測 / JSPS 2025</span></div>
+          <div class="initial-big-number">${d.grant.budgetLevel}<small> / 4・研究室予算ゲームポイント</small></div>
+          <p class="initial-card-note">${esc(d.grant.description)} 研究室の実際の科研費配分額へ換算できません。</p>
+          <div class="initial-reference"><strong>2025年度の新規採択課題数（研究種目別）</strong><small>棒の長さは採択件数。金額は1課題当たり直接経費の平均。</small><div class="initial-statlist">${grantBars}</div><small>${esc(reference.grants.note)}</small></div>
+          ${citation(reference.grants)}
         </section>
-        <section class="initial-card" aria-label="研究室の規模"><div class="initial-card-heading"><div><div class="section-label">04 / LAB SIZE</div><h2>研究室の人数構成</h2></div><span class="initial-source-tag assumed">仮想設定</span></div>
-          <div class="initial-big-number">${d.lab.total}<small>人・想定所属人数</small></div>
-          <div class="initial-lab-stack" role="img" aria-label="修士 ${master}人、博士 ${doctor}人、教員 ${faculty}人">${split.filter(x=>x.value>0).map(x=>`<div class="${x.kind}" style="width:${x.value/d.lab.total*100}%"></div>`).join('')}</div>
-          <div class="initial-lab-labels">${split.map(x=>`<span><i class="${x.kind}"></i>${x.label} <b>${x.value}人</b></span>`).join('')}</div>
-          <p class="initial-card-note">${esc(d.lab.description)}全国の研究室規模の統計分布やパーセンタイルは未接続です。</p>
+        <section class="initial-card" aria-label="研究室の人員構成と実測平均"><div class="initial-card-heading"><div><div class="section-label">04 / LAB SIZE</div><h2>研究室の人数構成</h2></div><span class="initial-source-tag observed">実測 / NISTEP 2018</span></div>
+          <div class="initial-big-number">${d.lab.total}<small>人・ゲーム内の仮想所属人数</small></div>
+          <p class="initial-card-note">修士 ${d.lab.master}人、博士 ${d.lab.doctor}人、教員 ${d.lab.faculty}人。${esc(d.lab.description)}</p>
+          <div class="initial-reference"><strong>所属研究グループの平均人数（大学種別）</strong>${labBars}<div class="ref-lab-key">${memberParts.map(part=>`<span><i class="ref-key ${part.css}"></i>${esc(part.name)}</span>`).join('')}</div><small>${esc(reference.laboratories.note)}</small></div>
+          ${citation(reference.laboratories)}
         </section>
       </main>
-      <div class="initial-bottom"><p><strong>データの読み方：</strong>実測値はJASSOの博士一般学生全体の平均で、あなたの上位何％かを示すものではありません。他の3項目と初期収入はゲーム内の仮定です。</p><button class="primary" data-do="intro-next">${state.introSeen===false?'研究生活を始める →':'ゲームへ戻る →'}</button></div>
+      <div class="initial-bottom"><p><strong>統計の読み方：</strong>参考グラフはすべて公開調査からの値です。ただし研究実績は修了者、研究室人数は選定された研究者の回答です。ゲームの仮想人物を同じ集団の上位何％かに割り当てることはできません。</p><button class="primary" data-do="intro-next">${state.introSeen===false?'研究生活を始める →':'ゲームへ戻る →'}</button></div>
     </div>`);
   }
   function helpModal(){return `<div class="modal-back" data-do="close-overlay"><section class="modal" role="dialog" aria-modal="true" aria-label="ゲームの仕組み"><div class="top-actions"><button class="tiny-btn" data-do="close">閉じる ×</button></div><div class="kicker">ABOUT THE MODEL</div><h2>遊び方とデータの扱い</h2><p>最初にDCの認知を選ぶと、大学・研究分野・教授・家庭環境がランダムに決まります。月ごとに活動を選択し、研究・生活費・論文・奨学金の状態を更新します。</p><ul><li><strong>固定日程</strong>：DC1はM2春、DC2はD1/D2春を想定した申請イベントを配置。</li><li><strong>予約イベント</strong>：DC選考・RA選考・査読結果は申請や投稿後に予約。</li><li><strong>条件付きイベント</strong>：分野・教授の性質・研究進捗・精神状態に合うイベントだけ抽選。</li><li><strong>学位審査</strong>：D3末に仮の論文数・進捗目標を判定。未達なら延長を選択可能。</li><li><strong>同じ初期条件</strong>：画面上部の「引き直す」から同じ乱数シードを再利用して検証できます。</li><li><strong>オートモード</strong>：進行オートは現在の月次行動と確認のみのイベントを自動で進め、分岐選択と論文投稿で停止します。完全オートは月次行動・投稿・イベント選択を簡単な仮ルールで自動化します。ブラウザを閉じたり再読み込みすると手動へ戻ります。</li></ul><div class="notification"><strong>重要：</strong>このプロトタイプは<strong>実データで較正されていません。</strong>採択率・イベント発生率・家庭所得・博士の取得率・進路・学位要件などは例示値です。再現性のあるゲームエンジンの動作確認用です。</div><h3 style="margin-top:20px">制度上の参考元</h3>${Object.values(GameData.evidence).map(x=>`<div class="source-line"><a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.label)} ↗</a><div class="small-note">${x.tier==='candidate_dataset'?'未接続の将来の統計ソース':'制度・日程の参照元'}</div></div>`).join('')}<div class="top-actions" style="margin-top:14px"><button class="primary" data-do="close">ゲームへ戻る</button></div></section></div>`}
