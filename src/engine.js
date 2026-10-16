@@ -18,7 +18,7 @@ const DoctoralGame = (() => {
       cash:0,debt:0,morale:68, research:0,draft:0,papers:0, initialPapers:0,dcPrep:0,raPrep:0,
       manuscript:'writing', pending:null, offers:[],schedule:[],logs:[],seen:{},fellowship:null,spring:null,ra:null,
       applications:{}, actionHistory:[], savedInitial:null,university:null,field:null,advisor:null,family:null,relationship:null,
-      labBudget:0, lastCashFlow:null };
+      labBudget:0, lastCashFlow:null, timeline:[] };
     s.field=pick(s,GameData.fields).id;
     s.university=weighted(s,GameData.universities).id;
     s.advisor=pick(s,GameData.advisors).id;
@@ -32,6 +32,7 @@ const DoctoralGame = (() => {
     s.morale=range(s,59,83);
     s.dcPrep=awareness==='aware'?range(s,1,5):0;
     s.savedInitial={...s, savedInitial:null, logs:[],actionHistory:[],offers:[],schedule:[],seen:{},applications:{}};
+    s.timeline.push({kind:'start',month:s.month,period:date(s),title:'研究人生のはじまり',detail:'最初に配られた条件',before:null,after:endingSnapshot(s),delta:{},notes:[]});
     log(s,'あなたの研究人生が始まった',awareness==='aware'?'M2の春。DC1の申請を見据えて動き出す。':'D1の春。DC1は申請しておらず、他の支援策を探すことになる。','positive');
     return s;
   }
@@ -163,6 +164,39 @@ const DoctoralGame = (() => {
     s.schedule.push({kind:'review',due:s.month+duration,prob});
     log(s,'論文を投稿した',`${duration}か月後に査読結果の予定。`, 'positive','hypothetical');return true;
   }
+  // Every user-initiated state transition gets an immutable, replayable record.
+  // This is presentation history, not part of the RNG or causal simulation.
+  const ENDING_KEYS=['research','draft','morale','cash','debt','papers','dcPrep','raPrep','labBudget'];
+  function endingSnapshot(s){
+    const result={};for(const k of ENDING_KEYS)result[k]=Number(s[k])||0;
+    result.funding=typeof s.fellowship==='undefined'?'なし':mainFunding(s);
+    return result;
+  }
+  function recordTransition(s,kind,title,detail,fn){
+    if(!Array.isArray(s.timeline)){
+      // Old saved games have logs but not enough information for historical deltas.
+      s.timeline=[{kind:'legacy_start',month:s.month,period:date(s),title:'ここから差分を記録',detail:'以前の出来事は差分が保存されていません',before:null,after:endingSnapshot(s),delta:{},notes:[]}];
+    }
+    const before=endingSnapshot(s),prev=s.logs[0],month=s.month,period=date(s);
+    const result=fn();
+    if(!result)return result;
+    const after=endingSnapshot(s),delta={};
+    for(const k of ENDING_KEYS)if(after[k]!==before[k])delta[k]=Number((after[k]-before[k]).toFixed(2));
+    const notes=[];
+    for(const item of s.logs){
+      if(item===prev)break;
+      notes.push({title:item.title,detail:item.detail||'',type:item.type||'neutral'});
+    }
+    s.timeline.push({kind,month,period,title,detail,before,after,delta,notes});
+    return result;
+  }
+  function advanceRecorded(s,action){return recordTransition(s,'month',`今月の行動：${GameData.actions.find(a=>a.id===action)?.name||action}`,`選択：${action}`,()=>advance(s,action));}
+  function resolveRecorded(s,index){
+    const event=s.pending,choice=event?.choices[index];
+    if(!choice)return false;
+    return recordTransition(s,'event',event.title,`選択：${choice.label}`,()=>resolve(s,index));
+  }
+  function submitRecorded(s){return recordTransition(s,'submission','論文を投稿した','査読結果を待つ',()=>submit(s));}
   function mainFunding(s){const candidates=[s.fellowship,s.spring,s.ra].filter(x=>active(x,s.month));return candidates.length?candidates.map(x=>x.type).join(' / '):'なし';}
-  return {makeGame,profile,stage,date,dateText,monthInAcademicYear,log,advance,resolve,submit,canSubmit,mainFunding,applicationChance,active,effect};
+  return {makeGame,profile,stage,date,dateText,monthInAcademicYear,log,advance:advanceRecorded,resolve:resolveRecorded,submit:submitRecorded,canSubmit,mainFunding,applicationChance,active,effect,endingSnapshot};
 })();
