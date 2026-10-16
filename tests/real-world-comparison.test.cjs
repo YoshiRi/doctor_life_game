@@ -28,13 +28,13 @@ test('100 trials produce comparable 5-bin duration and 2-bin degree series witho
  assert.equal(report.degree.length,2);
  assert(approx(report.duration.reduce((a,b)=>a+b.game,0),100));
  assert(approx(report.degree.reduce((a,b)=>a+b.game,0),100));
- assert.equal(report.degree[0].game,run.graduated);
+ assert(approx(report.degree[0].game,100*run.graduated/report.completedSize));
  assert.equal(report.degree[0].real,72.9);
  assert.equal(report.duration[2].game,0);
  assert.equal(report.duration[3].game,0);
  assert.equal(report.duration[4].game,0);
- assert.equal(report.duration.filter(b=>b.player).length,1);
- assert.equal(report.degree.filter(b=>b.player).length,1);
+ assert.equal(report.duration.filter(b=>b.player).length,s.outcome.status==='dropout'?0:1);
+ assert.equal(report.degree.filter(b=>b.player).length,s.outcome.status==='dropout'?0:1);
 });
 test('published papers retain nonresponse and do not imply identical publication definitions',()=>{
  const s=G.makeGame('unaware',39,120);const run=M.run(s,7405);

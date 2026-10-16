@@ -35,13 +35,13 @@ test('100 journeys preserve original save and add up correctly',()=>{
   const r=M.run(s,483921);
   assert.equal(JSON.stringify(s),before);
   assert.equal(r.sampleSize,100);
-  assert.equal(r.outcomes.standard+r.outcomes.extended+r.outcomes.withoutDegree,100);
-  assert.equal(r.duration[36]+r.duration[48],100);
+  assert.equal(r.outcomes.standard+r.outcomes.extended+r.outcomes.withoutDegree+r.outcomes.dropout,100);
+  assert.equal(Object.values(r.duration).reduce((sum,n)=>sum+n,0),100);
   assert.equal(r.papers.reduce((a,b)=>a+b,0),100);
   assert.equal(r.samples.length,100);
   assert.equal(new Set(r.samples.map(x=>x.episodeSeed)).size,100);
   for(const type of ['DC1','DC2']) assert(r.dc[type].accepted<=r.dc[type].applied);
-  for(const sample of r.samples)assert([36,48].includes(sample.months));
+  for(const sample of r.samples)assert(sample.outcome==='dropout'?(sample.months<36):([36,48].includes(sample.months)));
 });
 
 test('same batch seed produces same batch; different batch changes results',()=>{

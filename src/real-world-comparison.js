@@ -38,7 +38,7 @@ const RealWorldComparison=(()=>{
       label,
       game:completedPct(completers.filter(s=>i===0?s.months<=36:i===1?s.months>36&&s.months<=48:false).length),
       real:MEXT.byField[fieldKey][i],
-      player:!!player?.finished&&(i===0?player.outcome.months<=36:i===1?player.outcome.months>36&&player.outcome.months<=48:false)
+      player:!!player?.finished&&player.outcome.status!=='dropout'&&(i===0?player.outcome.months<=36:i===1?player.outcome.months>36&&player.outcome.months<=48:false)
     }));
     const degree=[{label:'学位取得',game:completedPct(trials.graduated),real:DEGREE.rate,player:player?.finished?player.outcome.status==='degree':false},
       {label:'学位未取得（満期退学）',game:completedPct(trials.outcomes.withoutDegree),real:100-DEGREE.rate,player:player?.finished?player.outcome.status==='without_degree':false}];
@@ -53,7 +53,7 @@ const RealWorldComparison=(()=>{
       gamePaperCounts[v===0?0:v===1?1:v===2?2:v<=5?3:4]++;
     }
     const papers=paperLabels.map((label,i)=>({label,game:completedPct(gamePaperCounts[i]),real:actual[i]/total*100,
-      player:!!player?.finished&&i!==5&&(i===0?player.papers===0:i===1?player.papers===1:i===2?player.papers===2:i===3?player.papers>=3&&player.papers<=5:player.papers>=6)}));
+      player:!!player?.finished&&player.outcome.status!=='dropout'&&i!==5&&(i===0?player.papers===0:i===1?player.papers===1:i===2?player.papers===2:i===3?player.papers>=3&&player.papers<=5:player.papers>=6)}));
     const dropoutSource=ReferenceStats.dropout;
     const dropout=[{label:'中途退学',game:pct(trials.outcomes.dropout||0),real:dropoutSource.annualPct,
       player:player?.finished?player.outcome.status==='dropout':false}];
