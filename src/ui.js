@@ -151,11 +151,25 @@
     const grantBars=reference.grants.types.map(g=>`<div class="statrow"><div class="statrow-head"><span>${esc(g.label)}　<small>平均直接経費 ${g.meanManYen.toLocaleString('ja-JP')}万円</small></span><strong>${g.accepted.toLocaleString('ja-JP')}件</strong></div><div class="statrow-track"><div class="statrow-fill" style="width:${g.accepted/reference.grants.types[0].accepted*100}%"></div></div></div>`).join('');
     const memberParts=[{key:'faculty',name:'教員',css:'faculty'},{key:'postdoc',name:'PD',css:'postdoc'},{key:'doctor',name:'博士',css:'doctor'},{key:'master',name:'修士',css:'master'},{key:'undergrad',name:'学部',css:'undergrad'},{key:'assistant',name:'補助等',css:'assistant'}];
     const labBars=reference.laboratories.kinds.map(kind=>`<div class="ref-lab-row"><div class="statrow-head"><strong>${esc(kind.label)}</strong><span>平均 ${kind.total.toFixed(1)}人</span></div><div class="ref-lab-stack" role="img" aria-label="${esc(kind.label)}の実測平均人数。${memberParts.map(p=>p.name+kind[p.key]+'人').join('、')}">${memberParts.map(part=>`<div class="ref-lab-segment ${part.css}" style="width:${kind[part.key]/kind.total*100}%" title="${esc(part.name)} ${kind[part.key]}人"></div>`).join('')}</div></div>`).join('');
+    const gameRank=d.gameCohort;
+    const rankCards=gameRank.metrics.map(x=>`<div class="game-rank-card" aria-label="${esc(x.label)}。ゲーム内相対スコア${x.percentile}、ランク${x.tier}。仮想集団の上位約${x.approxTop}%相当">
+        <div class="game-rank-top"><span class="game-rank-name">${esc(x.label)}</span><b class="game-rank-tier tier-${x.tier}">${x.tier}</b></div>
+        <div class="game-rank-value"><strong>${x.percentile}<small>/100</small></strong><span>ゲーム内相対スコア</span></div>
+        <div class="game-rank-meter"><span style="width:${x.percentile}%"></span><i style="left:${x.percentile}%"></i></div>
+        <div class="game-rank-comparison">仮想集団で<strong>上位約${x.approxTop}%相当</strong></div>
+        <p>${esc(x.explanation)}：${x.key==='grant'?'Lv.':''}${x.value}${x.key==='grant'?'':x.unit}</p>
+      </div>`).join('');
     const citation=(source)=>`<a class="initial-source-link" href="${esc(source.url)}" target="_blank" rel="noopener noreferrer">出典：${esc(source.title)}（${esc(source.location)}） ↗</a>`;
     return frame(`<div class="initial-report">
       <div class="initial-heading"><div><div class="kicker">YOUR STARTING HAND / ${esc(d.period)}</div><h1>あなたの研究人生は<br><em>ここから始まる。</em></h1><p>${esc(d.field)}・${esc(d.university)}（${esc(d.region)}） / SEED #${d.seed}</p></div>
         <div class="initial-heading-actions"><span class="initial-tag">初期条件レポート</span><button class="primary" data-do="intro-next">${state.introSeen===false?'この人生を始める →':'ゲームへ戻る →'}</button></div></div>
-      <p class="initial-lead">あなたの条件は<strong>ゲームの設定</strong>、下の比較グラフは<strong>公表された実測値</strong>です。対象者と測定時期が一致しない場合は、順位や上位何％とは表示しません。</p>
+      <p class="initial-lead">最初に<strong>ゲーム内の仮想学生集団</strong>と比較して、配られた初期条件をランク表示します。下段には<strong>一次資料からの公表値</strong>も掲載しています。2つは異なるデータです。</p>
+      <section class="game-rank-section" aria-label="ゲーム内の初期ステータスと仮想母集団における位置">
+        <div class="game-rank-heading"><div><div class="kicker">YOUR STARTING STATS</div><h2>博士人生の初期パラメータ</h2></div><span class="game-rank-assumption">ゲーム内の仮想母集団</span></div>
+        <p class="game-rank-subtitle">${esc(d.field)}・${esc(d.stage)}開始の仮想学生 ${gameRank.n.toLocaleString('ja-JP')} 人と比較。<strong>数字が大きいほど相対的に高い</strong>設定です。</p>
+        <div class="game-rank-grid">${rankCards}</div>
+        <p class="game-rank-disclaimer"><strong>※ エンタメ用のステータスです。</strong>ゲーム内部の仮の抽選ルールに基づく相対スコア（同値は中間順位）。実際の博士学生の上位割合・偏差値・実測パーセンタイルではありません。Grantは資金額ではなくゲームポイントです。</p>
+      </section>
       <main class="initial-grid">
         <section class="initial-card" aria-label="開始時の収入と生活費"><div class="initial-card-heading"><div><div class="section-label">01 / MONEY</div><h2>収入と生活費</h2></div><span class="initial-source-tag assumed">自分の条件は仮設定</span></div>
           <div class="initial-big-number">${money.total}<small>万円 / 月・ゲーム内収入</small></div>
@@ -185,7 +199,7 @@
           ${citation(reference.laboratories)}
         </section>
       </main>
-      <div class="initial-bottom"><p><strong>統計の読み方：</strong>参考グラフはすべて公開調査からの値です。ただし研究実績は修了者、研究室人数は選定された研究者の回答です。ゲームの仮想人物を同じ集団の上位何％かに割り当てることはできません。</p><button class="primary" data-do="intro-next">${state.introSeen===false?'研究生活を始める →':'ゲームへ戻る →'}</button></div>
+      <div class="initial-bottom"><p><strong>統計の読み方：</strong>上段のランクはゲーム内の仮想母集団だけで計算。下段の参考グラフは公開調査の値ですが、研究実績は修了者、研究室人数は選定研究者の回答です。実在の博士学生集団における順位は計算していません。</p><button class="primary" data-do="intro-next">${state.introSeen===false?'研究生活を始める →':'ゲームへ戻る →'}</button></div>
     </div>`);
   }
   function helpModal(){return `<div class="modal-back" data-do="close-overlay"><section class="modal" role="dialog" aria-modal="true" aria-label="ゲームの仕組み"><div class="top-actions"><button class="tiny-btn" data-do="close">閉じる ×</button></div><div class="kicker">ABOUT THE MODEL</div><h2>遊び方とデータの扱い</h2><p>最初にDCの認知を選ぶと、大学・研究分野・教授・家庭環境がランダムに決まります。月ごとに活動を選択し、研究・生活費・論文・奨学金の状態を更新します。</p><ul><li><strong>固定日程</strong>：DC1はM2春、DC2はD1/D2春を想定した申請イベントを配置。</li><li><strong>予約イベント</strong>：DC選考・RA選考・査読結果は申請や投稿後に予約。</li><li><strong>条件付きイベント</strong>：分野・教授の性質・研究進捗・精神状態に合うイベントだけ抽選。</li><li><strong>学位審査</strong>：D3末に仮の論文数・進捗目標を判定。未達なら延長を選択可能。</li><li><strong>同じ初期条件</strong>：画面上部の「引き直す」から同じ乱数シードを再利用して検証できます。</li><li><strong>オートモード</strong>：進行オートは現在の月次行動と確認のみのイベントを自動で進め、分岐選択と論文投稿で停止します。完全オートは月次行動・投稿・イベント選択を簡単な仮ルールで自動化します。ブラウザを閉じたり再読み込みすると手動へ戻ります。</li></ul><div class="notification"><strong>重要：</strong>このプロトタイプは<strong>実データで較正されていません。</strong>採択率・イベント発生率・家庭所得・博士の取得率・進路・学位要件などは例示値です。再現性のあるゲームエンジンの動作確認用です。</div><h3 style="margin-top:20px">制度上の参考元</h3>${Object.values(GameData.evidence).map(x=>`<div class="source-line"><a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.label)} ↗</a><div class="small-note">${x.tier==='candidate_dataset'?'未接続の将来の統計ソース':'制度・日程の参照元'}</div></div>`).join('')}<div class="top-actions" style="margin-top:14px"><button class="primary" data-do="close">ゲームへ戻る</button></div></section></div>`}

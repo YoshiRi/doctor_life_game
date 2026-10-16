@@ -139,3 +139,26 @@
 .ref-lab-key{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
 .ref-lab-key span{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px}
 .ref-key{display:inline-block;height:9px;width:9px;border-radius:3px}
+
+/* Game-only, entertainment-oriented starting stat tiers. Separate from observed reference charts. */
+.game-rank-section{margin:22px 0 26px;border:1px solid #47796b;border-radius:20px;padding:22px;background:linear-gradient(145deg,#172f2c,#102426);box-shadow:0 15px 35px #0003}
+.game-rank-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.game-rank-heading h2{font-size:23px;line-height:1.35;margin:6px 0 0}
+.game-rank-assumption{border:1px solid #91764a;border-radius:999px;padding:5px 11px;color:#f1d7a0;font-size:11px;font-weight:700;background:#44362455}
+.game-rank-subtitle{color:#b8cbc5;font-size:13px;line-height:1.7;margin:15px 0 18px}
+.game-rank-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.game-rank-card{min-width:0;background:#0e2425;border:1px solid #355651;border-radius:14px;padding:16px}
+.game-rank-top{display:flex;justify-content:space-between;align-items:center;gap:7px}.game-rank-name{font-size:13px;font-weight:800}
+.game-rank-tier{border:1px solid #688e7a;background:#244939;color:#c6edda;border-radius:8px;min-width:31px;text-align:center;padding:1px 8px;font-size:16px}
+.game-rank-tier.tier-S{border-color:#d5b87e;color:#ffdf9a;background:#584527}.game-rank-tier.tier-A{border-color:#97c4ab;color:#c6f6d7}.game-rank-tier.tier-C,.game-rank-tier.tier-D{color:#b1bfba;border-color:#5e7772;background:#1a3433}
+.game-rank-value{display:flex;align-items:baseline;gap:7px;margin:12px 0 8px;flex-wrap:wrap}
+.game-rank-value strong{font-size:36px;line-height:1;font-weight:850;letter-spacing:-.05em;color:#d6f9e1;font-variant-numeric:tabular-nums}
+.game-rank-value strong small{font-size:13px;font-weight:500;color:var(--muted)}.game-rank-value>span{font-size:10px;color:var(--muted)}
+.game-rank-meter{height:10px;position:relative;background:linear-gradient(90deg,#6a6370 0%,#6d8990 30%,#459f89 65%,#d1b576 100%);border-radius:999px;outline:3px solid #0b1d1d}
+.game-rank-meter>span{position:absolute;left:0;top:0;bottom:0;width:0;border-right:2px solid #fff;background:#ffffff20;border-radius:999px}
+.game-rank-meter>i{position:absolute;top:-4px;width:4px;height:18px;border-radius:4px;background:#f6f3d7;transform:translateX(-50%);box-shadow:0 0 0 2px #153635}
+.game-rank-comparison{margin-top:11px;color:#a7c2b8;font-size:11px}.game-rank-comparison strong{color:#e0ead8;font-weight:850}
+.game-rank-card p{font-size:11px;line-height:1.6;color:#879f9b;margin:7px 0 0}
+.game-rank-disclaimer{font-size:11px;line-height:1.65;color:#9eb6b0;margin:17px 0 0;border-top:1px solid #36534e;padding-top:12px}
+@media(max-width:900px){.game-rank-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:450px){.game-rank-section{padding:14px}.game-rank-grid{gap:8px}.game-rank-card{padding:12px 10px}.game-rank-value strong{font-size:29px}.game-rank-name{font-size:12px}}
