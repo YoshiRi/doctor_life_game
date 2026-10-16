@@ -54,5 +54,12 @@ const ReferenceStats = (() => {
     location:'「研究室・研究グループの平均的な人員構成」、スライド17（PDF 17ページ目）',
     note:'研究グループ単位の大学種別平均で、個別研究室人数の確率分布ではありません。表示の端数は四捨五入により合計と一致しない場合があります。'
   });
-  return Object.freeze({income,publications,grants,laboratories});
+  const dropout=Object.freeze({
+    year:2024,title:'文部科学省「令和6年度 学生の中途退学者・休学者数の調査結果」',
+    population:'博士課程の2024年4月1日時点在籍者に対する、2024年度中の中途退学者（満期退学者を含まない）',
+    annualPct:3.40,students:2565,
+    url:'https://www.mext.go.jp/content/20250822-mxt_gakushi01-000013028_2.pdf',
+    note:'年間の在籍者に対する中退割合。入学から修了までの累積中退率ではない。中途退学理由の割合は博士課程限定ではない。'
+  });
+  return Object.freeze({income,publications,grants,laboratories,dropout});
 })();
