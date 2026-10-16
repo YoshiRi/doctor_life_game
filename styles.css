@@ -173,3 +173,42 @@
 .cohort-disclaimer{border-left:3px solid var(--gold);background:#302d22;padding:13px 15px;color:#e3dac2;font-size:12px;border-radius:0 10px 10px 0;margin-top:18px}.cohort-actions{display:flex;align-items:center;justify-content:flex-end;gap:12px;flex-wrap:wrap;margin-top:18px}.cohort-actions .small-note{margin-right:auto}
 @media(max-width:750px){.cohort-screen{padding:16px}.cohort-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.cohort-grid{grid-template-columns:1fr}.cohort-toolbar h2{font-size:21px}.cohort-actions{justify-content:stretch}.cohort-actions button{flex:1}}
 @media(max-width:440px){.top-actions{flex-wrap:wrap;justify-content:flex-end}.cohort-metric strong{font-size:23px}}
+/* Results: same-hand Monte Carlo rankings (game-model observations only). */
+.end-initial,.end-result{margin:16px 0 20px;padding:20px;border:1px solid #42645c;border-radius:16px;background:linear-gradient(130deg,#18332f,#112727)}
+.end-section-heading{display:flex;justify-content:space-between;align-items:start;gap:12px;margin-bottom:12px}
+.end-section-heading h3{font-size:19px;line-height:1.4;margin:3px 0}
+.end-tag{background:#234239;border:1px solid #426457;border-radius:99px;padding:5px 10px;color:var(--mint);white-space:nowrap;font-size:10px}
+.end-init-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px;margin:15px 0}
+.end-init-card{background:#112625;border:1px solid #31554c;border-radius:12px;padding:11px;min-width:0}
+.end-init-card>div:first-child{display:flex;gap:5px;justify-content:space-between;font-size:12px;color:#b4d1c3}
+.end-init-card>b{display:block;font-size:24px;color:#e8f3ea;line-height:1.4}
+.end-init-card>b small{font-size:11px;color:#9eb5af}
+.end-init-card>small{font-size:10px;color:var(--muted)}
+.end-tier{background:#315445;color:var(--mint);padding:2px 7px;font-size:12px;border-radius:7px}
+.end-init-track,.end-rank-track,.end-hist-track{position:relative;overflow:hidden;background:#29433f;border-radius:99px;height:7px}
+.end-init-track{margin:6px 0}
+.end-init-track i,.end-rank-track i{display:block;height:100%;border-radius:99px;background:var(--mint)}
+.end-outcome{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}
+.end-outcome>div{background:#1c4034;padding:12px;border:1px solid #366353;border-radius:12px}
+.end-outcome small{display:block;font-size:11px;color:#b4d0c4}
+.end-outcome strong{display:block;color:var(--mint);font-size:16px;overflow-wrap:anywhere}
+.end-result-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin-top:15px}
+.end-stat{padding:14px;border:1px solid #36544d;border-radius:13px;background:#102724;min-width:0}
+.end-stat-top{display:flex;justify-content:space-between;gap:5px;align-items:center;margin-bottom:7px}
+.end-stat-top h4{margin:0;font-size:14px;color:#c9e5d6}
+.end-stat-main{display:flex;align-items:end;flex-wrap:wrap;justify-content:space-between;gap:5px;margin-bottom:9px}
+.end-stat-main>strong{font-size:25px;line-height:1.3}
+.end-stat-main>strong small{font-size:12px;margin-left:4px;color:var(--muted)}
+.end-stat-main>span{font-size:12px;font-weight:bold;color:var(--gold)}
+.end-stat .small-note{line-height:1.5;margin:7px 0 12px}
+.end-hist{display:grid;gap:8px}
+.end-hist-line{display:grid;grid-template-columns:minmax(80px,1fr) minmax(55px,1.7fr) auto;gap:7px;align-items:center;font-size:10px;color:#a7bdb2}
+.end-hist-line.selected{color:var(--mint);font-weight:bold}
+.end-hist-line>span{overflow-wrap:anywhere}
+.end-hist-line>strong{white-space:nowrap;font-size:10px}
+.end-hist-line .end-hist-track i{display:block;height:100%;background:#547e70;border-radius:99px}
+.end-hist-line.selected .end-hist-track i{background:var(--mint)}
+.end-you{font-size:9px;background:#365c48;color:#ddf4dc;border-radius:4px;padding:1px 4px}
+.end-disclaimer{color:#b3c6bd;font-size:11px;line-height:1.7;margin:15px 0 0}
+.cohort-screen .end-initial,.cohort-screen .end-result{margin-bottom:20px}
+@media(max-width:650px){.end-initial,.end-result{padding:12px}.end-init-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.end-result-grid{grid-template-columns:1fr}.end-outcome{gap:5px}.end-outcome>div{padding:8px}.end-outcome strong{font-size:12px}.end-section-heading{flex-direction:column}.end-section-heading h3{font-size:17px}}
