@@ -100,7 +100,7 @@ test('debug run finishes 250 seeds within step bound and is deterministic',()=>{
     assert(result.finished,`seed=${seed} failed: ${result.reason}`);
     assert(result.steps>0 && result.steps<=600);
     assert.equal(result.months,a.actionHistory.length);
-    assert(a.month===36||a.month===48);
+    assert(a.outcome.status==='dropout'?a.month<36:(a.month===36||a.month===48));
     assert(a.outcome);
     A.runToEnd(b);
     assert.equal(JSON.stringify(a),JSON.stringify(b));

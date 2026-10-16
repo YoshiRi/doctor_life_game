@@ -42,7 +42,7 @@ const OutcomeReport=(()=>{
       median:median(s.values),min:Math.min(...s.values),max:Math.max(...s.values),
       ...position(s.value,s.values,s.better),bins:histogram(s.values,s.value,s.key)}));
     const completed=samples.filter(s=>s.outcome==='standard'||s.outcome==='extended').length;
-    const category=state.outcome.status==='degree'?(state.outcome.months===36?'standard':'extended'):'withoutDegree';
+    const category=state.outcome.status==='dropout'?'dropout':state.outcome.status==='degree'?(state.outcome.months===36?'standard':'extended'):'withoutDegree';
     return {sampleSize:n,metrics,months:{value:state.outcome.months,median:median(samples.map(s=>s.months)),bins:histogram(samples.map(s=>s.months),state.outcome.months,'months')},
       result:{category,matching:samples.filter(s=>s.outcome===category).length,graduated:completed,standard:trials.outcomes.standard}};
   }

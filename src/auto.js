@@ -25,6 +25,12 @@ const AutoPlay = (() => {
     const input=`${s.seed}:${s.episodeSeed??s.seed}:${s.month}:${s.pending.id}:${s.logs.length}:${s.actionHistory.length}`;
     let hash=2166136261;
     for (let i=0;i<input.length;i++) hash=Math.imul(hash^input.charCodeAt(i),16777619)>>>0;
+    if(s.pending.id==='early_exit_offer'||s.pending.id==='voluntary_early_exit'){
+      const highRisk=s.morale<30||s.debt>=140;
+      const vulnerable=s.morale<45||s.debt>=65||(s.month>=24&&s.papers===0&&s.research<50);
+      const chance=highRisk?70:vulnerable?35:12; // Fictional strategy, not empirical dropout odds.
+      return hash%100<chance?1:0;
+    }
     return hash%choices.length;
   }
 

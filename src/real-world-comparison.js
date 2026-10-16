@@ -30,28 +30,34 @@ const RealWorldComparison=(()=>{
     if(!trials?.samples?.length)throw Error('Missing completed game trials');
     if(!FIELD_KEYS.includes(fieldKey))throw Error('Unknown real-world reference field');
     const n=trials.samples.length;
+    const completers=trials.samples.filter(s=>s.outcome!=='dropout');
+    const nCompleted=completers.length;
     const pct=count=>100*count/n;
+    const completedPct=count=>nCompleted?100*count/nCompleted:0;
     const durations=MEXT.labels.map((label,i)=>({
       label,
-      game:pct(trials.samples.filter(s=>i===0?s.months<=36:i===1?s.months>36&&s.months<=48:false).length),
+      game:completedPct(completers.filter(s=>i===0?s.months<=36:i===1?s.months>36&&s.months<=48:false).length),
       real:MEXT.byField[fieldKey][i],
-      player:!!player?.finished&&(i===0?player.outcome.months<=36:i===1?player.outcome.months>36&&player.outcome.months<=48:false)
+      player:!!player?.finished&&player.outcome.status!=='dropout'&&(i===0?player.outcome.months<=36:i===1?player.outcome.months>36&&player.outcome.months<=48:false)
     }));
-    const degree=[{label:'学位取得',game:pct(trials.graduated),real:DEGREE.rate,player:player?.finished?player.outcome.status==='degree':false},
-      {label:'学位未取得',game:pct(n-trials.graduated),real:100-DEGREE.rate,player:player?.finished?player.outcome.status!=='degree':false}];
+    const degree=[{label:'学位取得',game:completedPct(trials.graduated),real:DEGREE.rate,player:player?.finished?player.outcome.status==='degree':false},
+      {label:'学位未取得（満期退学）',game:completedPct(trials.outcomes.withoutDegree),real:100-DEGREE.rate,player:player?.finished?player.outcome.status==='without_degree':false}];
     const existing=ReferenceStats.publications;
     const actual=[existing.bins[0].count,existing.bins[1].count,existing.bins[2].count,existing.bins[3].count,
       existing.bins.slice(4,7).reduce((a,b)=>a+b.count,0),existing.bins[7].count];
     const total=actual.reduce((a,b)=>a+b,0);
     const paperLabels=['0本','1本','2本','3～5本','6本以上','無回答'];
     const gamePaperCounts=[0,0,0,0,0,0];
-    for(const s of trials.samples){
+    for(const s of completers){
       const v=s.papers;
       gamePaperCounts[v===0?0:v===1?1:v===2?2:v<=5?3:4]++;
     }
-    const papers=paperLabels.map((label,i)=>({label,game:pct(gamePaperCounts[i]),real:actual[i]/total*100,
-      player:!!player?.finished&&i!==5&&(i===0?player.papers===0:i===1?player.papers===1:i===2?player.papers===2:i===3?player.papers>=3&&player.papers<=5:player.papers>=6)}));
-    return {sampleSize:n,fieldKey,fieldName:FIELD_NAMES[fieldKey],fields:FIELD_KEYS.map(key=>({key,label:FIELD_NAMES[key]})),
+    const papers=paperLabels.map((label,i)=>({label,game:completedPct(gamePaperCounts[i]),real:actual[i]/total*100,
+      player:!!player?.finished&&player.outcome.status!=='dropout'&&i!==5&&(i===0?player.papers===0:i===1?player.papers===1:i===2?player.papers===2:i===3?player.papers>=3&&player.papers<=5:player.papers>=6)}));
+    const dropoutSource=ReferenceStats.dropout;
+    const dropout=[{label:'中途退学',game:pct(trials.outcomes.dropout||0),real:dropoutSource.annualPct,
+      player:player?.finished?player.outcome.status==='dropout':false}];
+    return {sampleSize:n,completedSize:nCompleted,dropout,dropoutSource,fieldKey,fieldName:FIELD_NAMES[fieldKey],fields:FIELD_KEYS.map(key=>({key,label:FIELD_NAMES[key]})),
       duration:durations,degree,papers,mext:MEXT,degreeSource:DEGREE,publicationSource:existing};
   }
   return {build,defaultField,MEXT,DEGREE,FIELD_KEYS};

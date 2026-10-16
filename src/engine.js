@@ -118,6 +118,25 @@ const DoctoralGame = (() => {
     if(s.manuscript==='writing'&&s.research>=26)s.draft=clamp(s.draft+range(s,1,3),0,100);
     s.morale=clamp(s.morale-p.advisor.stress,0,100);
   }
+  function earlyExitEvent(id='early_exit_offer'){
+    return {id,category:'life',tone:'negative',source:'hypothetical',
+      title:'研究を続けるか、別の進路へ進むか',
+      description:'研究生活の負担と今後のキャリアを考える機会が訪れた。博士号を取得しないまま進路を変える道もある。',
+      choices:[
+        {label:'博士課程を続ける',detail:'研究生活を続ける / 気力 +3',kind:'continue_study',effects:{morale:3}},
+        {label:'中途退学して別の進路へ',detail:'学位未取得で課程を離れる。元には戻せない',kind:'early_dropout'}
+      ]};
+  }
+  function earlyExitChance(s){
+    if(s.finished||s.month<3||s.month>=36)return 0;
+    // Fictional frequency of a career crossroad, NOT the observed 3.40% dropout rate.
+    return clamp(.008+(s.debt>=65?.007:0)+(s.morale<45?.010:0)+(!isFunded(s)&&s.cash<10?.004:0),.008,.04);
+  }
+  function maybeEarlyExit(s){const chance=earlyExitChance(s);if(chance>0&&roll(s,chance))enqueue(s,earlyExitEvent());}
+  function offerWithdrawal(s){
+    if(!s||s.finished||s.pending||s.offers.length||s.month<0||s.month>=36)return false;
+    s.pending=earlyExitEvent('voluntary_early_exit');return true;
+  }
   function career(s){const outcomes=s.papers>=3?['大学・研究機関のポスドク','企業の研究開発','大学教員（任期付き）','非研究職']:['企業の研究開発','大学・研究機関のポスドク','非研究職','起業・フリーランス'];return pick(s,outcomes);}
   function evaluateEnd(s){if(s.month!==36&&s.month!==48)return;
     const p=profile(s), ready=s.papers>=p.university.paperRequirement&&s.research>=p.university.researchRequirement;
@@ -129,7 +148,7 @@ const DoctoralGame = (() => {
     const oldDate=date(s);actionEffects(s,action);finance(s,action);s.actionHistory.push({month:s.month,period:oldDate,action});
     s.month++;
     if(s.month===0){log(s,'博士課程に入学した','M2の年度が終わり、D1が始まった。','positive');}
-    scheduled(s);fixedEvents(s);if(s.month<36)randomEvents(s);evaluateEnd(s);showNext(s);
+    scheduled(s);fixedEvents(s);if(s.month<36){randomEvents(s);maybeEarlyExit(s);}evaluateEnd(s);showNext(s);
     return true;
   }
   function applicationChance(s,type){const base=type==='DC1'?GameData.hypotheticalProbabilities.dc1Base:GameData.hypotheticalProbabilities.dc2Base;
@@ -165,6 +184,11 @@ const DoctoralGame = (() => {
       s.manuscript='writing';if(choice.result==='accepted'){s.papers++;s.draft=0;s.research=clamp(s.research+5,0,100);s.morale=clamp(s.morale+10,0,100);}
       else if(choice.result==='revision'){s.draft=68;s.morale=clamp(s.morale-6,0,100);}else{s.draft=37;s.morale=clamp(s.morale-12,0,100);}
       log(s,ev.title,'研究成果と投稿計画を更新。',choice.result==='accepted'?'positive':'negative');
+    }else if(choice.kind==='early_dropout'){
+      s.finished=true;
+      s.outcome={title:'博士課程を中途退学',status:'dropout',career:career(s),months:s.month,papers:s.papers,debt:s.debt};
+      s.offers=[];s.schedule=[];
+      log(s,'博士課程を中途退学した','標準修業年限を迎える前に別の進路へ進むことを選んだ。','negative');
     }else if(choice.kind==='extend'){log(s,'課程を1年延長','新たな年度の研究を続ける。','neutral');}
     else if(choice.kind==='withdraw'){s.finished=true;s.outcome={title:'課程を離れた（学位未取得）',status:'without_degree',career:career(s),months:s.month,papers:s.papers,debt:s.debt};log(s,'課程を離れた','その後のキャリアへ進む。','negative');}
     else {log(s,ev.title,choice.label,ev.tone,ev.source);}
@@ -210,5 +234,5 @@ const DoctoralGame = (() => {
   }
   function submitRecorded(s){return recordTransition(s,'submission','論文を投稿した','査読結果を待つ',()=>submit(s));}
   function mainFunding(s){const candidates=[s.fellowship,s.spring,s.ra].filter(x=>active(x,s.month));return candidates.length?candidates.map(x=>x.type).join(' / '):'なし';}
-  return {makeGame,mixSeed,profile,stage,date,dateText,monthInAcademicYear,log,advance:advanceRecorded,resolve:resolveRecorded,submit:submitRecorded,canSubmit,mainFunding,applicationChance,active,effect,endingSnapshot};
+  return {makeGame,mixSeed,profile,stage,date,dateText,monthInAcademicYear,log,advance:advanceRecorded,resolve:resolveRecorded,submit:submitRecorded,canSubmit,mainFunding,applicationChance,active,effect,endingSnapshot,earlyExitChance,offerWithdrawal};
 })();

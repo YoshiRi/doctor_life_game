@@ -31,7 +31,7 @@ test('midrank handles ties, debt rewards lower balances, duration avoids ranking
  assert.equal(R.position(0,[0,0,1,2],'low').top,25);
  const s=G.makeGame('unaware',222,33);A.runToEnd(s);
  const d=R.build(s,M.run(s,1234));
- assert.equal(d.months.bins.length,2);
+ assert(d.months.bins.length>=2);
  assert.equal(d.months.top,undefined);
 });
 test('non-finished sessions have no final standing and pure histogram includes outliers',()=>{
