@@ -8,3 +8,23 @@
 .auto-option.active{background:var(--mint);color:#103429;border-color:var(--mint);font-weight:800}.auto-option:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
 .auto-caption{flex-basis:100%;color:var(--muted);font-size:11px;margin:0}
 @media(max-width:650px){.auto-panel{padding:12px;gap:9px}.auto-heading{width:100%}.auto-buttons{width:100%;display:grid;grid-template-columns:repeat(3,minmax(0,1fr))}.auto-option{padding:10px 4px;font-size:11px}}
+
+/* Fast debug run, adjacent month progression, and event decision dialog. */
+.action-item{display:flex;flex-direction:column;min-width:0;gap:6px}
+.action-item .action-option{width:100%;flex:1}
+.action-item.selected{border-radius:13px;background:#1a3730;padding:4px;outline:1px solid #619e82}
+.action-advance{border:0;border-radius:10px;padding:10px 8px;background:var(--mint);color:#102b26;font-size:12px;font-weight:800;width:100%;min-height:40px}
+.action-advance:hover{background:#d0f9df}
+.action-advance:focus-visible,.event-open-button:focus-visible,.debug-finish-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+.auto-debug{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border-top:1px solid var(--line);margin-top:12px;padding-top:12px}
+.debug-finish-button{white-space:nowrap;border-color:#96784a;color:var(--gold);font-weight:750}
+.event-open-button{margin-top:15px;position:relative}
+.event-modal-back{z-index:40}
+.event-dialog{width:min(620px,100%);border-color:#597f68;background:#142b29}
+.event-dialog h2{margin:12px 0;font-size:25px;line-height:1.4}
+.event-dialog .copy{color:#c2d1cb;line-height:1.85}
+.event-modal-header{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.event-dialog .event-actions{margin-top:18px}
+.event-dialog .event-choice{width:100%}
+.debug-summary{margin-top:20px;padding:14px;border:1px solid #557863;border-radius:12px;background:#1a362c;font-size:12px;color:#c7e8ce}
+@media(max-width:650px){.auto-debug{align-items:stretch}.debug-finish-button{width:100%}.event-dialog{padding:18px}.event-dialog h2{font-size:21px}}
