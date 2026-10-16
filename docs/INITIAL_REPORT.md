@@ -28,3 +28,9 @@ References to institutional and disciplinary data must be matched by cohort, sam
 2. Import KAKEN PI/project yearly direct cost data and choose an aggregation cohort, notional laboratory-to-PI mapping and multi-PI attribution rules. Never equate awarded grant totals with unrestricted laboratory operating budgets.
 3. Find university/lab-level enrolment rosters or a defensible aggregated reference sample; only then display percentiles for laboratory size.
 4. Replace the hypothetical family, income, and living-cost model with independently documented sources; ensure no student-loan inflow is mistaken for wages.
+
+## Entertainment layer: virtual population status tiers
+
+The opening report now includes four **game-only** rankings: monthly starting inflows (family support + simplified work), master's-output-equivalent achievements, starting lab-budget level, and hypothetical lab membership. The rankings compare the player to a fixed deterministic cohort of **1,024 synthetic game starts** matching the same research field and M2/D1 entry stage, sampled with the existing `DoctoralGame.makeGame` model. Synthetic samples are cached by field/stage. A pure read-only `InitialReport.build` computes tie-adjusted midrank percentiles and an S–D letter tier, rounded to 5% increments for the approximate upper-percentile label. Data are calculated without advancing the current game or consuming the player's RNG.
+
+This is **not** a national percentile, deviation score, observed cohort, income survey benchmark, KAKEN rank, or publication peer benchmark. Do not mix the entertainment tiers with `ReferenceStats` measurements. Grants refer solely to fictional `labBudget` levels, and the virtual lab head count is UI-only. Never label these ranks as measurements of Japan's doctoral population, or reuse them for calibration of game event probabilities.
