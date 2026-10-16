@@ -82,3 +82,10 @@ test('complete automatic journeys eventually finish, with bounded months and det
     assert.equal(JSON.stringify(a),JSON.stringify(b));
   }
 });
+test('UI script parses and loads only after auto policy',()=>{
+  const ui=fs.readFileSync(path.join(dir,'ui.js'),'utf8');
+  assert.doesNotThrow(()=>new vm.Script(ui));
+  const html=fs.readFileSync(path.resolve(dir,'../index.html'),'utf8');
+  assert(html.indexOf('src/auto.js')>html.indexOf('src/engine.js'));
+  assert(html.indexOf('src/ui.js')>html.indexOf('src/auto.js'));
+});
