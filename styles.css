@@ -115,3 +115,27 @@
   .topbar>.top-actions{width:100%;justify-content:flex-start;flex-wrap:wrap}
   .topbar>.top-actions .tiny-btn{white-space:nowrap;overflow-wrap:normal;flex:0 0 auto}
 }
+
+/* Observed statistics on the initial-conditions report. No fictional percentile charts. */
+.initial-reference{width:100%;margin-top:14px}
+.initial-reference small{font-size:11px;line-height:1.65;color:#aec3ca}
+.initial-statlist{width:100%;display:grid;gap:10px;margin:10px 0}
+.statrow{width:100%;min-width:0}
+.statrow-head{display:flex;justify-content:space-between;gap:10px;font-size:12px;line-height:1.55;margin-bottom:4px;align-items:baseline}
+.statrow-head>span{min-width:0}.statrow-head>strong{color:var(--mint);flex-shrink:0}
+.statrow-head small{font-size:10px;color:var(--muted);font-weight:400}
+.statrow-track{height:9px;background:#253f44;overflow:hidden;border-radius:99px}
+.statrow-fill{height:100%;border-radius:99px;background:linear-gradient(90deg,#438f9b,#a2d4bd)}
+.statrow.compact .statrow-track{height:6px}
+.ref-lab-row{width:100%;margin-top:10px}
+.ref-lab-stack{display:flex;height:22px;width:100%;overflow:hidden;border-radius:7px;background:#294a4e}
+.ref-lab-segment{height:100%;min-width:0}
+.ref-lab-segment.faculty,.ref-key.faculty{background:#b8e0cb}
+.ref-lab-segment.postdoc,.ref-key.postdoc{background:#7aafcc}
+.ref-lab-segment.doctor,.ref-key.doctor{background:#d7b987}
+.ref-lab-segment.master,.ref-key.master{background:#67b6a3}
+.ref-lab-segment.undergrad,.ref-key.undergrad{background:#5c8998}
+.ref-lab-segment.assistant,.ref-key.assistant{background:#b190ac}
+.ref-lab-key{display:flex;gap:9px;flex-wrap:wrap;margin-top:12px}
+.ref-lab-key span{font-size:10px;color:var(--muted);display:flex;align-items:center;gap:4px}
+.ref-key{display:inline-block;height:9px;width:9px;border-radius:3px}
