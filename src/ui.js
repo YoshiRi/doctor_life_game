@@ -12,6 +12,8 @@
   let lastEventKey=null;
   let runSummary=null; // One-shot debug summary, never added to the saved game state.
   let credits=null; // Playback UI only; not part of the saved game.
+  let introReopened=false; // Reopen initial snapshot without changing game state.
+  function introVisible(){return !!state && (state.introSeen===false || introReopened);}
   let creditsTimer=null;
   let creditsFrame=null;
   function clearCreditsTimer(){if(creditsTimer!==null){clearTimeout(creditsTimer);creditsTimer=null;}if(creditsFrame!==null){cancelAnimationFrame(creditsFrame);creditsFrame=null;}}
@@ -72,7 +74,7 @@
   function stopAuto(){cancelAutoTimer();autoMode=AutoPlay.MODES.off;}
   function autoTick(){
     autoTimer=null;
-    if(dialog||document.hidden||!AutoPlay.canStep(state,autoMode))return;
+    if(dialog||introVisible()||document.hidden||!AutoPlay.canStep(state,autoMode))return;
     try {
       const result=AutoPlay.step(state,autoMode,selectedAction);
       if(result.type==='paused')return;
@@ -83,7 +85,7 @@
   }
   function scheduleAuto(){
     cancelAutoTimer();
-    if(!dialog&&!document.hidden&&AutoPlay.canStep(state,autoMode)){autoTimer=setTimeout(autoTick,AutoPlay.DELAY_MS);}
+    if(!dialog&&!introVisible()&&!document.hidden&&AutoPlay.canStep(state,autoMode)){autoTimer=setTimeout(autoTick,AutoPlay.DELAY_MS);}
   }
   const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
   const fmt=n=>Math.round(n).toLocaleString('ja-JP');
@@ -91,7 +93,7 @@
   const getEventSource=e=>({story:'体験談を想定した創作イベント',hypothetical:'モデル上の仮定',official_schedule:'申請時期は実制度を参考',official_schedule_hypothetical_rate:'日程は実制度、採択確率は仮定',game:'ゲーム内イベント'}[e.source]||'モデル上の仮定');
   function load(){try{const data=JSON.parse(localStorage.getItem(STORAGE)||'null');if(data&&data.version===1&&typeof data.month==='number'&&Array.isArray(data.logs)&&data.rngState&&data.field){state=data}}catch(e){console.warn('Could not load save',e)}}
   function save(){try{if(state)localStorage.setItem(STORAGE,JSON.stringify(state));else localStorage.removeItem(STORAGE)}catch(e){console.warn('Could not save',e)}}
-  function frame(content){return `<div class="app-frame"><header class="topbar"><div class="brand"><div class="brand-symbol">◈</div><div><div class="brand-word">博士、何年目。</div><div class="brand-sub">DOCTORAL LIFE / A SIMULATION</div></div></div><div class="top-actions">${state?'<button class="tiny-btn" data-do="help">ルール</button><button class="tiny-btn" data-do="export">記録を保存</button><button class="tiny-btn" data-do="new">引き直す</button>':'<span class="meta-pill">PROTOTYPE 0.1</span><button class="tiny-btn" data-do="help">遊び方</button>'}</div></header>${content}<footer class="footer"><span>博士、何年目。 / Doctoral Life — prototype</span><span>確率・大学・研究室・学位要件はすべて仮設定。実在大学の評価ではありません。</span></footer></div>${dialog?helpModal():credits?creditsModal():showEventDialog()?eventModal():''}`}
+  function frame(content){return `<div class="app-frame"><header class="topbar"><div class="brand"><div class="brand-symbol">◈</div><div><div class="brand-word">博士、何年目。</div><div class="brand-sub">DOCTORAL LIFE / A SIMULATION</div></div></div><div class="top-actions">${state?'<button class="tiny-btn" data-do="intro-open">初期条件</button><button class="tiny-btn" data-do="help">ルール</button><button class="tiny-btn" data-do="export">記録を保存</button><button class="tiny-btn" data-do="new">引き直す</button>':'<span class="meta-pill">PROTOTYPE 0.1</span><button class="tiny-btn" data-do="help">遊び方</button>'}</div></header>${content}<footer class="footer"><span>博士、何年目。 / Doctoral Life — prototype</span><span>確率・大学・研究室・学位要件はすべて仮設定。実在大学の評価ではありません。</span></footer></div>${dialog?helpModal():credits?creditsModal():introVisible()?'':showEventDialog()?eventModal():''}`}
   function landing(){return frame(`<section class="hero"><div><div class="kicker">YOUR LIFE IS A CONDITIONAL PROBABILITY</div><h1>もし、<br>別の研究人生を<br><em>引いていたら。</em></h1><p>分野、大学、実家の経済力、教授、研究業績。自分では選べない初期条件を引き、論文を書き、資金を探し、博士号取得までの時間を進める。</p><div class="hero-visual"><div class="mini-tile"><span>研究分野</span><b>4 TYPES</b></div><div class="mini-tile"><span>初期条件</span><b>RANDOM</b></div><div class="mini-tile"><span>人生</span><b>1 / ∞</b></div></div><div class="disclaimer">この版はゲーム機構の検証用です。統計に基づいた実際の人物生成ではありません。イベント発生率や大学の修了要件も仮値です。</div></div><div class="entry-card"><div class="kicker">PROLOGUE — 修士課程</div><h2>最初の質問です。</h2><p>あなたはJSPS特別研究員（DC1）を、申請できる時期に知っていましたか？</p><button class="start-option" data-do="start" data-awareness="aware"><span class="circle">01</span><span><strong>知っていた。M2から準備する</strong><small>M2・4月から。DC1申請機会あり</small></span></button><button class="start-option" data-do="start" data-awareness="heard"><span class="circle">02</span><span><strong>聞いたことはあるが、よく知らなかった</strong><small>D1・4月から。DC1は未申請</small></span></button><button class="start-option" data-do="start" data-awareness="unaware"><span class="circle">03</span><span><strong>知らなかった</strong><small>D1・4月から。別の資金ルートを探す</small></span></button><div class="entry-note"><span>✦</span><span>DC1・DC2の応募時期はJSPSの制度を参考に簡略化。採択率・学生のプロフィール・研究進捗は仮モデルです。</span></div></div></section><div class="landing-bottom"><span class="feature-chip">DC1 / DC2 / RA / 博士支援</span><span class="feature-chip">研究・査読・学位要件</span><span class="feature-chip">家庭環境と研究室</span><span class="feature-chip">月単位の選択</span><span class="feature-chip">同じ人生をリプレイ</span></div>`)}
   function meter(v,className=''){return `<div class="meter"><div class="fill ${className}" style="width:${percent(v)}%"></div></div>`}
   function metric(name,value,unit,help,progress,className=''){return `<div class="metric-card"><div class="metric-label"><span>${esc(name)}</span><span>${esc(help)}</span></div><div class="metric-value">${esc(value)}<span>${esc(unit)}</span></div>${meter(progress,className)}</div>`}
@@ -141,21 +143,65 @@
   function queued(){return `<section class="panel"><div class="section-label">UPCOMING</div><h3>予定されている出来事</h3>${state.schedule.length?state.schedule.slice().sort((a,b)=>a.due-b.due).slice(0,5).map(e=>`<div class="scheduled-item"><span>${esc(({dc_result:'DC選考結果',spring_result:'博士支援の選考結果',ra_result:'RA選考結果',review:'論文査読結果'})[e.kind]||e.kind)}</span><strong>あと${Math.max(0,e.due-state.month)}か月</strong></div>`).join(''):'<div class="empty">予定されている結果待ちはありません。</div>'}<hr class="separator"><div class="small-note">予定イベントは発生時刻を予約して管理します。偶発イベントとは別のキューです。</div></section>`}
   function chronicle(){return `<section class="panel"><div class="section-label">YOUR CHRONICLE</div><h2>これまでに起きたこと</h2>${state.logs.slice(0,10).map(l=>`<div class="logline ${esc(l.type)}"><div><div class="logdate">${esc(l.period)}</div><div class="logtitle">${esc(l.title)}</div>${l.detail?`<div class="logdesc">${esc(l.detail)}</div>`:''}</div></div>`).join('')||'<div class="empty">まだ何も起きていません。</div>'}</section>`}
   function gameplay(){const p=DoctoralGame.profile(state),month=state.month,completion=Math.round(Math.max(0,Math.min(100,month/36*100)));return frame(`<section class="chapter-head"><div class="chapter-title"><div class="kicker">COHORT 2027 / ${esc(p.university.region.toUpperCase())}</div><h1>${esc(DoctoralGame.date(state))} <span class="chip">${state.finished?'完了':state.pending?'イベント発生中':'進行中'}</span></h1><div class="chapter-subtitle">${esc(p.field.name)} / ${esc(p.university.name)} / ${esc(p.advisor.name)}の指導</div></div><div class="small-note">SEED #${state.seed}<br>学位取得想定：D3末</div></section><div class="time-track"><div class="time-progress" style="width:${completion}%"></div></div>${autoPanel()}<section class="metric-grid">${metric('研究進捗',Math.round(state.research),'%',`目標 ${p.university.researchRequirement}%`,state.research,'')}${metric('査読採択論文',state.papers,'本',`必要 ${p.university.paperRequirement}本`,state.papers/p.university.paperRequirement*100,'gold')}${metric('現金残高',fmt(state.cash),'万円','生活費を確保',Math.max(0,Math.min(100,state.cash/70*100)),'')}${metric('精神的余裕',Math.round(state.morale),'%',state.morale<40?'注意が必要':'研究生活の状態',state.morale,state.morale<40?'red':'')}</section><main class="main-grid"><div class="left-stack">${story()}${state.finished?'':actionPanel()}${chronicle()}</div><aside class="aside-stack">${persona()}${finance()}${queued()}</aside></main><div class="watermark">SIMULATED LIFE — 仮モデルの確率で生成された架空の人生です</div>`)}
+  function initialReport(){
+    const d=InitialReport.build(state),money=d.income,range=32;
+    const moneyBar=(label,value,type)=>`<div class="initial-money-row"><div class="initial-money-label"><span>${esc(label)}</span><strong>${Number(value).toFixed(1)} 万円/月</strong></div><div class="initial-track"><div class="initial-fill ${type}" style="width:${Math.max(0,Math.min(100,value/range*100))}%"></div></div></div>`;
+    const histogram=(items,value,max)=>`<div class="initial-histogram" role="img" aria-label="ゲーム内の仮分布。選択された値 ${value}">${items.map((item,i)=>`<div class="initial-hist-item ${value===i?'current':''}"><div class="initial-hist-percent">${item}%</div><div class="initial-hist-pillar" style="height:${Math.max(5,item/max*100)}%"></div><span>${i===2&&items.length===3?'2':' '+i}</span></div>`).join('')}</div>`;
+    const master=d.lab.master,doctor=d.lab.doctor,faculty=d.lab.faculty;
+    const split=[{value:master,label:'修士',kind:'masters'},{value:doctor,label:'博士',kind:'doctors'},{value:faculty,label:'教員',kind:'faculty'}];
+    return frame(`<div class="initial-report">
+      <div class="initial-heading"><div><div class="kicker">YOUR STARTING HAND / ${esc(d.period)}</div><h1>あなたの研究人生は<br><em>ここから始まる。</em></h1><p>${esc(d.field)}・${esc(d.university)}（${esc(d.region)}） / SEED #${d.seed}</p></div>
+        <div class="initial-heading-actions"><span class="initial-tag">初期条件レポート</span><button class="primary" data-do="intro-next">${state.introSeen===false?'この人生を始める →':'ゲームへ戻る →'}</button></div></div>
+      <p class="initial-lead">最初に配られた条件を可視化しました。<strong>実測統計</strong>と<strong>ゲーム内の仮設定</strong>は、出典・対象集団を明示して区別しています。</p>
+      <main class="initial-grid">
+        <section class="initial-card" aria-label="開始時の収入と生活費"><div class="initial-card-heading"><div><div class="section-label">01 / MONEY</div><h2>収入と生活費</h2></div><span class="initial-source-tag assumed">ゲームの仮設定</span></div>
+          <div class="initial-big-number">${money.total}<small>万円 / 月・見込み収入</small></div>
+          ${moneyBar('家庭からの援助',money.family,'family')}${moneyBar(d.stage==='M2'?'修士の想定収入':'博士の短時間勤務',money.work,'work')}${moneyBar('生活費（授業料等を除く）',money.cost,'expense')}
+          <p class="initial-balance ${money.balance<0?'negative':''}">月次収支の目安 <strong>${money.balance>0?'+':''}${money.balance} 万円</strong> ／ 初期現金 ${money.startingCash} 万円</p>
+          <div class="initial-reference"><span class="initial-source-tag observed">実測・2024年度JASSO</span><strong>博士一般学生の平均年間収入 <b>266.5万円</b></strong><div class="initial-ref-track">参考月換算 約${money.observedMean.toFixed(1)}万円（貸与奨学金などを含む）</div><small>全年次の平均で、M2や新入生の分布・順位ではありません。ゲームの収入内訳とは定義も異なります。</small></div>
+          <a class="initial-source-link" href="${esc(d.jasso.url)}" target="_blank" rel="noopener noreferrer">出典：JASSO 学生生活調査 2024年度（大学院試行） ↗</a>
+        </section>
+        <section class="initial-card" aria-label="修士までの論文実績"><div class="initial-card-heading"><div><div class="section-label">02 / OUTPUT</div><h2>修士までの研究実績</h2></div><span class="initial-source-tag assumed">仮分布</span></div>
+          <div class="initial-big-number">${d.papers.value}<small>本相当の実績指標</small></div>
+          ${histogram(d.papers.distribution,d.papers.value,60)}
+          <div class="initial-legend"><span>初期値 0 / 1 / 2 相当</span><b>選ばれた値を強調</b></div>
+          <p class="initial-card-note">${esc(d.papers.description)}割合（60 / 30 / 10%）はゲーム内の抽選重みです。修士学生の出版実績についての実測分布ではありません。</p>
+        </section>
+        <section class="initial-card" aria-label="研究室の科研費と予算レベル"><div class="initial-card-heading"><div><div class="section-label">03 / GRANT</div><h2>研究室の研究資金</h2></div><span class="initial-source-tag assumed">仮分布</span></div>
+          <div class="initial-big-number">${d.grant.budgetLevel}<small> / 4 研究室予算ポイント</small></div>
+          ${histogram([33,33,34],Math.max(0,Math.min(2,d.grant.budgetLevel)),34)}
+          <div class="initial-legend"><span>初期抽選でのポイント 0 / 1 / 2</span><b>各 約1/3</b></div>
+          <p class="initial-card-note">${esc(d.grant.description)}実際の資金額・採択率・研究室内配分の分布はまだゲームへ接続していません。</p>
+          <a class="initial-source-link" href="${esc(d.kakenUrl)}" target="_blank" rel="noopener noreferrer">参考データソース：KAKEN 科研費データベース ↗</a>
+        </section>
+        <section class="initial-card" aria-label="研究室の規模"><div class="initial-card-heading"><div><div class="section-label">04 / LAB SIZE</div><h2>研究室の人数構成</h2></div><span class="initial-source-tag assumed">仮想設定</span></div>
+          <div class="initial-big-number">${d.lab.total}<small>人・想定所属人数</small></div>
+          <div class="initial-lab-stack" role="img" aria-label="修士 ${master}人、博士 ${doctor}人、教員 ${faculty}人">${split.filter(x=>x.value>0).map(x=>`<div class="${x.kind}" style="width:${x.value/d.lab.total*100}%"></div>`).join('')}</div>
+          <div class="initial-lab-labels">${split.map(x=>`<span><i class="${x.kind}"></i>${x.label} <b>${x.value}人</b></span>`).join('')}</div>
+          <p class="initial-card-note">${esc(d.lab.description)}全国の研究室規模の統計分布やパーセンタイルは未接続です。</p>
+        </section>
+      </main>
+      <div class="initial-bottom"><p><strong>データの読み方：</strong>実測値はJASSOの博士一般学生全体の平均で、あなたの上位何％かを示すものではありません。他の3項目と初期収入はゲーム内の仮定です。</p><button class="primary" data-do="intro-next">${state.introSeen===false?'研究生活を始める →':'ゲームへ戻る →'}</button></div>
+    </div>`);
+  }
   function helpModal(){return `<div class="modal-back" data-do="close-overlay"><section class="modal" role="dialog" aria-modal="true" aria-label="ゲームの仕組み"><div class="top-actions"><button class="tiny-btn" data-do="close">閉じる ×</button></div><div class="kicker">ABOUT THE MODEL</div><h2>遊び方とデータの扱い</h2><p>最初にDCの認知を選ぶと、大学・研究分野・教授・家庭環境がランダムに決まります。月ごとに活動を選択し、研究・生活費・論文・奨学金の状態を更新します。</p><ul><li><strong>固定日程</strong>：DC1はM2春、DC2はD1/D2春を想定した申請イベントを配置。</li><li><strong>予約イベント</strong>：DC選考・RA選考・査読結果は申請や投稿後に予約。</li><li><strong>条件付きイベント</strong>：分野・教授の性質・研究進捗・精神状態に合うイベントだけ抽選。</li><li><strong>学位審査</strong>：D3末に仮の論文数・進捗目標を判定。未達なら延長を選択可能。</li><li><strong>同じ初期条件</strong>：画面上部の「引き直す」から同じ乱数シードを再利用して検証できます。</li><li><strong>オートモード</strong>：進行オートは現在の月次行動と確認のみのイベントを自動で進め、分岐選択と論文投稿で停止します。完全オートは月次行動・投稿・イベント選択を簡単な仮ルールで自動化します。ブラウザを閉じたり再読み込みすると手動へ戻ります。</li></ul><div class="notification"><strong>重要：</strong>このプロトタイプは<strong>実データで較正されていません。</strong>採択率・イベント発生率・家庭所得・博士の取得率・進路・学位要件などは例示値です。再現性のあるゲームエンジンの動作確認用です。</div><h3 style="margin-top:20px">制度上の参考元</h3>${Object.values(GameData.evidence).map(x=>`<div class="source-line"><a href="${esc(x.url)}" target="_blank" rel="noopener noreferrer">${esc(x.label)} ↗</a><div class="small-note">${x.tier==='candidate_dataset'?'未接続の将来の統計ソース':'制度・日程の参照元'}</div></div>`).join('')}<div class="top-actions" style="margin-top:14px"><button class="primary" data-do="close">ゲームへ戻る</button></div></section></div>`}
   function render(){
-    syncEventDialog();root.innerHTML=state?gameplay():landing();
+    syncEventDialog();root.innerHTML=state?(introVisible()?initialReport():gameplay()):landing();
     if(credits){animateCredits();scheduleCredits();}else scheduleAuto();
   }
-  function start(awareness){closeCredits();stopAuto();runSummary=null;state=DoctoralGame.makeGame(awareness);selectedAction='research';save();render();window.scrollTo(0,0);}
+  function start(awareness){closeCredits();stopAuto();runSummary=null;introReopened=false;state=DoctoralGame.makeGame(awareness);state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);}
   function download(){if(!state)return;const blob=new Blob([JSON.stringify({note:'Doctoral Life prototype / all scenario probabilities are hypothetical',exported:new Date().toISOString(),state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`doctoral-life-${state.seed}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
   root.addEventListener('click',e=>{const button=e.target.closest('[data-do]');if(!button)return;const what=button.dataset.do;
     if(what==='start'){start(button.dataset.awareness);return}
     if(what==='help'){if(credits)closeCredits();dialog=true;render();return}
+    if(what==='intro-open'&&state){closeCredits();stopAuto();introReopened=true;render();return}
+    if(what==='intro-next'&&state){introReopened=false;state.introSeen=true;save();render();window.scrollTo(0,0);return}
     if(what==='close'||what==='close-overlay'){if(what==='close-overlay'&&e.target!==button)return;dialog=false;render();return}
     if(what==='export'){download();return}
-    if(what==='new'){if(state&&!window.confirm('現在の進行状況を破棄して新しい人生を引きますか？（必要なら先に記録を保存）'))return;closeCredits();stopAuto();runSummary=null;state=null;save();render();return}
-    if(what==='replay'){if(!state)return;closeCredits();stopAuto();runSummary=null;state=DoctoralGame.makeGame(state.awareness,state.seed);selectedAction='research';save();render();window.scrollTo(0,0);return}
+    if(what==='new'){if(state&&!window.confirm('現在の進行状況を破棄して新しい人生を引きますか？（必要なら先に記録を保存）'))return;closeCredits();stopAuto();runSummary=null;introReopened=false;state=null;save();render();return}
+    if(what==='replay'){if(!state)return;closeCredits();stopAuto();runSummary=null;introReopened=false;state=DoctoralGame.makeGame(state.awareness,state.seed);state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);return}
     if(!state)return;
+    if(introVisible())return;
     if(what==='credits-open'){openCredits();return}
     if(what==='credits-close'){closeCredits();render();return}
     if(credits){
