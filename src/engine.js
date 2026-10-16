@@ -12,9 +12,20 @@ const DoctoralGame = (() => {
   function dateText(s) { return `${dateYear(s)}年${((s.month+3)%12+12)%12+1}月`; }
   function monthInAcademicYear(s) { return ((s.month%12)+12)%12; }
   function log(s,title,detail='',type='neutral',source='game') { s.logs.unshift({month:s.month,period:date(s),title,detail,type,source});if(s.logs.length>150)s.logs.length=150; }
-  function makeGame(awareness='aware',seed) {
-    const seedValue = (seed===undefined ? (Date.now()^Math.floor(Math.random()*4294967295)) : seed)>>>0 || 123456789;
-    const s={version:1, seed:seedValue, rngState:seedValue, awareness, month:awareness==='aware'?-12:0, finished:false, outcome:null,
+  function mixSeed(value,salt=0){
+    let x=(value^salt)>>>0;
+    x=Math.imul(x^(x>>>16),0x7feb352d);
+    x=Math.imul(x^(x>>>15),0x846ca68b);
+    return ((x^(x>>>16))>>>0)||123456789;
+  }
+  function randomSeed(){return ((Date.now()^Math.floor(Math.random()*4294967295))>>>0)||123456789;}
+  // profileSeed controls ONLY initial conditions. episodeSeed controls subsequent randomness.
+  // Explicit seeds remain reproducible, but callers can vary the episode independently.
+  function makeGame(awareness='aware',seed,episodeSeed) {
+    const seedValue = (seed===undefined ? randomSeed() : seed)>>>0 || 123456789;
+    const episodeValue=(episodeSeed===undefined
+      ? (seed===undefined?randomSeed():mixSeed(seedValue,0xa53c9e21)) : episodeSeed)>>>0 || 123456789;
+    const s={version:1, seed:seedValue, profileSeed:seedValue, episodeSeed:episodeValue, rngState:seedValue, awareness, month:awareness==='aware'?-12:0, finished:false, outcome:null,
       cash:0,debt:0,morale:68, research:0,draft:0,papers:0, initialPapers:0,dcPrep:0,raPrep:0,
       manuscript:'writing', pending:null, offers:[],schedule:[],logs:[],seen:{},fellowship:null,spring:null,ra:null,
       applications:{}, actionHistory:[], savedInitial:null,university:null,field:null,advisor:null,family:null,relationship:null,
@@ -31,6 +42,7 @@ const DoctoralGame = (() => {
     s.draft=range(s,0,11);
     s.morale=range(s,59,83);
     s.dcPrep=awareness==='aware'?range(s,1,5):0;
+    s.rngState=episodeValue; // All future outcome rolls are independent of profile draws.
     s.savedInitial={...s, savedInitial:null, logs:[],actionHistory:[],offers:[],schedule:[],seen:{},applications:{}};
     s.timeline.push({kind:'start',month:s.month,period:date(s),title:'研究人生のはじまり',detail:'最初に配られた条件',before:null,after:endingSnapshot(s),delta:{},notes:[]});
     log(s,'あなたの研究人生が始まった',awareness==='aware'?'M2の春。DC1の申請を見据えて動き出す。':'D1の春。DC1は申請しておらず、他の支援策を探すことになる。','positive');
@@ -198,5 +210,5 @@ const DoctoralGame = (() => {
   }
   function submitRecorded(s){return recordTransition(s,'submission','論文を投稿した','査読結果を待つ',()=>submit(s));}
   function mainFunding(s){const candidates=[s.fellowship,s.spring,s.ra].filter(x=>active(x,s.month));return candidates.length?candidates.map(x=>x.type).join(' / '):'なし';}
-  return {makeGame,profile,stage,date,dateText,monthInAcademicYear,log,advance:advanceRecorded,resolve:resolveRecorded,submit:submitRecorded,canSubmit,mainFunding,applicationChance,active,effect,endingSnapshot};
+  return {makeGame,mixSeed,profile,stage,date,dateText,monthInAcademicYear,log,advance:advanceRecorded,resolve:resolveRecorded,submit:submitRecorded,canSubmit,mainFunding,applicationChance,active,effect,endingSnapshot};
 })();

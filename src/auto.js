@@ -22,7 +22,7 @@ const AutoPlay = (() => {
     if (recommended>=0) return recommended;
     if (choices.length===1) return 0;
     // Stable variation based on event identity; does not consume simulation RNG.
-    const input=`${s.seed}:${s.month}:${s.pending.id}:${s.logs.length}:${s.actionHistory.length}`;
+    const input=`${s.seed}:${s.episodeSeed??s.seed}:${s.month}:${s.pending.id}:${s.logs.length}:${s.actionHistory.length}`;
     let hash=2166136261;
     for (let i=0;i<input.length;i++) hash=Math.imul(hash^input.charCodeAt(i),16777619)>>>0;
     return hash%choices.length;
