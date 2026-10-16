@@ -14,6 +14,7 @@
   let credits=null; // Playback UI only; not part of the saved game.
   let introReopened=false; // Reopen initial snapshot without changing game state.
   let cohortResult=null; // Temporary analysis output; never stored in the game save.
+  let finalBenchmark=null; // Deterministic 100-life reference for finished journeys, not saved.
   function introVisible(){return !!state && (state.introSeen===false || introReopened);}
   let creditsTimer=null;
   let creditsFrame=null;
@@ -129,7 +130,7 @@
   }
   function eventModal(){const e=state.pending;return `<div class="modal-back event-modal-back" data-do="event-close-overlay"><section class="modal event-dialog" role="dialog" aria-modal="true" aria-labelledby="event-dialog-heading"><div class="event-modal-header"><div class="kicker">${esc(DoctoralGame.date(state))} — DECISION</div><button type="button" class="tiny-btn" data-do="event-close" aria-label="選択肢を閉じる">閉じる ×</button></div><span class="story-badge">${esc(({funding:'資金・申請',research:'研究',lab:'研究室',life:'生活',academic:'審査'})[e.category]||'できごと')}</span><h2 id="event-dialog-heading">${esc(e.title)}</h2><p class="copy">${esc(e.description)}</p><div class="event-actions">${e.choices.map((c,i)=>`<button type="button" class="event-choice" data-do="choice" data-index="${i}"><strong>${esc(c.label)} →</strong><small>${esc(c.detail||'')}</small></button>`).join('')}</div><div class="small-note" style="margin-top:14px">根拠: ${esc(getEventSource(e))}</div></section></div>`;}
   function story(){const e=state.pending;if(e){return `<section class="panel story-card event-${e.tone||'neutral'}"><div class="current-month">${esc(DoctoralGame.date(state))} — EVENT</div><span class="story-badge">${esc(({funding:'資金・申請',research:'研究',lab:'研究室',life:'生活',academic:'審査'})[e.category]||'できごと')}</span><h2>${esc(e.title)}</h2><p class="copy">${esc(e.description)}</p><button type="button" class="primary event-open-button" data-do="event-open">選択肢を開く →</button><div class="small-note" style="margin-top:14px">根拠: ${esc(getEventSource(e))}</div></section>`}
-    if(state.finished){return `<section class="panel story-card"><div class="current-month">THE END — ${esc(DoctoralGame.date(state))}</div><h2 class="result-title">${esc(state.outcome.title)}</h2><p class="copy">これが今回の研究人生の結末です。シミュレーションの結果は、統計的な予測ではなく仮モデルの帰結です。</p>${runSummary?`<div class="debug-summary"><strong>一括完走ログ</strong>　${runSummary.months}か月・${runSummary.choices}件の選択・${runSummary.submissions}本の投稿（計${runSummary.steps}遷移）</div>`:''}<div class="outcome-card"><div class="section-label">その後の進路（仮抽選）</div><h2>${esc(state.outcome.career)}</h2><div class="outcome-stats"><div><b>${fmt(state.papers)}本</b><small>査読論文</small></div><div><b>${fmt(state.outcome.months)}か月</b><small>博士課程の在籍</small></div><div><b>${fmt(state.debt)}万円</b><small>借入累計</small></div></div></div><div class="cta-row" style="margin-top:20px"><button class="primary" data-do="credits-open">人生のエンドロールを見る ▶</button><button class="ghost" data-do="replay">同じ条件で別の未来 ↺</button><button class="ghost" data-do="cohort-run">100通りの未来を分析</button><button class="ghost" data-do="new">別の人生を引く</button></div></section>`}
+    if(state.finished){return `<section class="panel story-card"><div class="current-month">THE END — ${esc(DoctoralGame.date(state))}</div><h2 class="result-title">${esc(state.outcome.title)}</h2><p class="copy">これが今回の研究人生の結末です。シミュレーションの結果は、統計的な予測ではなく仮モデルの帰結です。</p>${runSummary?`<div class="debug-summary"><strong>一括完走ログ</strong>　${runSummary.months}か月・${runSummary.choices}件の選択・${runSummary.submissions}本の投稿（計${runSummary.steps}遷移）</div>`:''}<div class="outcome-card"><div class="section-label">その後の進路（仮抽選）</div><h2>${esc(state.outcome.career)}</h2><div class="outcome-stats"><div><b>${fmt(state.papers)}本</b><small>査読論文</small></div><div><b>${fmt(state.outcome.months)}か月</b><small>博士課程の在籍</small></div><div><b>${fmt(state.debt)}万円</b><small>借入累計</small></div></div></div>${initialStatsCompact()}${resultComparison(endingBenchmark())}<div class="cta-row" style="margin-top:20px"><button class="primary" data-do="credits-open">人生のエンドロールを見る ▶</button><button class="ghost" data-do="replay">同じ条件で別の未来 ↺</button><button class="ghost" data-do="cohort-run">100通りの未来を分析</button><button class="ghost" data-do="new">別の人生を引く</button></div></section>`}
     const p=DoctoralGame.profile(state);const requirement=p.university.paperRequirement;
     return `<section class="panel story-card"><div class="current-month">${esc(DoctoralGame.date(state))} — YOUR CHAPTER</div><span class="story-badge">${esc(p.field.name)} / ${esc(p.university.region)}</span><h2>今月、どう過ごしますか。</h2><p class="copy">現在の研究進捗は ${Math.round(state.research)}%。査読採択された論文は ${state.papers} 本です。${state.manuscript==='reviewing'?'論文は査読中。研究を進めながら返事を待ちましょう。':state.draft>=100?'原稿が完成しています。投稿できます。':`原稿の完成度は ${Math.round(state.draft)}%。`}<br>学位取得の目安：採択論文 ${requirement} 本以上、研究進捗 ${p.university.researchRequirement}% 以上。</p><span class="story-badge">今月の選択は一つ。時間は戻せない。</span></section>`}
   function actionPanel(){const disabled=!!state.pending||state.finished;return `<section class="panel actions-panel"><div class="section-label">MONTHLY DECISION</div><h2>時間をどこに使うか</h2><p class="small-note">行動を選択し、同じ枠の「1か月進める」で確定します。</p><div class="actions-grid">${GameData.actions.map(a=>`<div class="action-item ${selectedAction===a.id?'selected':''}"><button class="action-option ${selectedAction===a.id?'active':''}" data-do="action" data-value="${a.id}" aria-pressed="${selectedAction===a.id}" ${disabled?'disabled':''}><span class="act-icon">${a.icon}</span><span class="act-copy"><strong>${esc(a.name)}</strong><small>${esc(a.detail)}</small></span></button>${selectedAction===a.id&&!disabled?'<button type="button" class="action-advance" data-do="advance">この行動で1か月進める →</button>':''}</div>`).join('')}</div><div class="cta-row"><button class="ghost" data-do="submit" ${DoctoralGame.canSubmit(state)?'':'disabled'}>論文を投稿する ✎</button></div><div class="mini-progress"><span>原稿 ${Math.round(state.draft)}% / 100%</span><span>${esc(state.manuscript==='reviewing'?'査読待ち':'執筆中')}</span></div>${meter(state.draft,'gold')}<p class="small-note">毎月の基本的な研究活動・生活費は自動計算。選択によって追加効果があります。論文投稿は完成時だけ可能です。</p></section>`}
@@ -209,6 +210,38 @@
     else entropy[0]=(Date.now()^Math.floor(Math.random()*4294967295))>>>0;
     return entropy[0]||123456789;
   }
+  function initialStatsCompact(){
+    const d=InitialReport.build(state);
+    if(!d)return '';
+    return `<section class="end-initial"><div class="end-section-heading"><div><div class="kicker">STARTING HAND</div><h3>この100回で固定した初期パラメータ</h3></div><span class="end-tag">仮想学生1,024人との比較</span></div>
+      <p class="small-note">${esc(d.field)}・${esc(d.stage)}開始／${esc(d.university)}。以下の相対ランクは初期条件のゲーム内仮想集団との比較で、100回の結果分布とは別です。</p>
+      <div class="end-init-grid">${d.gameCohort.metrics.map(x=>`<div class="end-init-card"><div><span>${esc(x.label)}</span><strong class="end-tier">${x.tier}</strong></div><b>${x.percentile}<small>/100</small></b><div class="end-init-track"><i style="width:${x.percentile}%"></i></div><small>初期の上位約${x.approxTop}%相当</small></div>`).join('')}</div>
+      <p class="small-note">初期条件：援助・業績・Grant環境・研究室規模は固定。人生のイベント乱数のみ変えています。</p></section>`;
+  }
+  function endHistogram(bins,n){
+    const max=Math.max(1,...bins.map(b=>b.count));
+    return `<div class="end-hist">${bins.map(b=>`<div class="end-hist-line ${b.selected?'selected':''}"><span>${esc(b.label)} ${b.selected?'<b class="end-you">あなた</b>':''}</span><div class="end-hist-track"><i style="width:${Math.round(b.count/max*100)}%"></i></div><strong>${b.count}/${n}</strong></div>`).join('')}</div>`;
+  }
+  function resultComparison(run,heading='あなたの最終順位'){
+    const d=OutcomeReport.build(state,run);
+    if(!d)return '';
+    const categoryLabels={standard:'標準年限内に学位取得',extended:'延長して学位取得',withoutDegree:'学位未取得'};
+    return `<section class="end-result" aria-label="同一初期条件での最終結果の相対位置"><div class="end-section-heading"><div><div class="kicker">FINAL STATS / ${d.sampleSize} LIVES</div><h3>${esc(heading)}</h3></div><span class="end-tag">ゲーム内100試行</span></div>
+      <p class="small-note">同じ初期条件から<strong>${d.sampleSize}回</strong>、完全オートの共通戦略で人生を再抽選。この人生の結果を比較しています。手動プレイの場合は行動方針が異なる点に注意。</p>
+      <div class="end-outcome"><div><small>この人生</small><strong>${esc(categoryLabels[d.result.category])}</strong></div><div><small>同じ結末</small><strong>${d.result.matching} / ${d.sampleSize}回</strong></div><div><small>博士号取得</small><strong>${d.result.graduated} / ${d.sampleSize}回</strong></div></div>
+      <div class="end-result-grid">${d.metrics.map(x=>`<article class="end-stat"><div class="end-stat-top"><h4>${esc(x.label)}</h4><b class="end-tier">${x.tier}</b></div><div class="end-stat-main"><strong>${esc(x.value)}<small>${esc(x.unit)}</small></strong><span>上位約${x.top}%相当</span></div><div class="end-rank-track"><i style="width:${x.percentile}%"></i></div><p class="small-note">中央値 ${esc(x.median)}${esc(x.unit)} ・ 範囲 ${esc(x.min)}～${esc(x.max)}${esc(x.unit)}<br>${esc(x.explain)}</p>${endHistogram(x.bins,d.sampleSize)}</article>`).join('')}
+      <article class="end-stat"><div class="end-stat-top"><h4>終了までの在籍期間</h4><b class="end-tier">TERM</b></div><div class="end-stat-main"><strong>${d.months.value}<small>か月</small></strong><span>中央値 ${d.months.median}か月</span></div><p class="small-note">短期終了が良いとは限りません（学位未取得も含みます）。在籍期間はランク化せず分布を表示。</p>${endHistogram(d.months.bins,d.sampleSize)}</article></div>
+      <p class="end-disclaimer">※ すべてゲーム内の条件付き試行であり、現実の博士課程における順位・学位取得確率ではありません。同点が多い指標では中間順位を使用しています。現金と累積借入は別項目です。</p></section>`;
+  }
+  function endingBenchmark(){
+    if(!state?.finished)return null;
+    const key=`${state.seed}:${state.awareness}`;
+    if(finalBenchmark?.key!==key){
+      const seed=DoctoralGame.mixSeed(state.seed,0x5a17fe32);
+      finalBenchmark={key,result:Multiverse.run(state,seed)};
+    }
+    return finalBenchmark.result;
+  }
   function cohortModal(){
     const r=cohortResult,n=r.sampleSize;
     const rate=v=>(100*v/n).toFixed(0)+'%';
@@ -224,6 +257,8 @@
     }).join('');
     return `<div class="cohort-back"><section class="cohort-screen" role="dialog" aria-modal="true" aria-label="100回ランダム実行の分析結果">
       <div class="cohort-toolbar"><div><div class="kicker">100 ALTERNATE LIVES</div><h2>同じ条件から、100通りの未来</h2><p>人物設定は固定し、人生の偶然だけを再抽選。行動は完全オートの共通ルールで決定しています。</p></div><button class="tiny-btn" data-do="cohort-close">閉じる ×</button></div>
+      ${initialStatsCompact()}
+      ${state?.finished?resultComparison(r,'この100回とあなたの結果'):''}
       <div class="cohort-summary">${cards.map(c=>`<div class="cohort-metric"><small>${esc(c.label)}</small><strong>${esc(c.value)}</strong><span>${esc(c.note)}</span></div>`).join('')}</div>
       <div class="cohort-grid"><section class="cohort-section"><h3>最終結果の分布</h3>${bar('標準年限内に学位取得',r.outcomes.standard,n)}${bar('延長して学位取得',r.outcomes.extended,n)}${bar('学位未取得',r.outcomes.withoutDegree,n)}<p class="small-note">すべての試行が終了するまで完全オートで進行しました。</p></section>
       <section class="cohort-section"><h3>査読採択論文数</h3>${r.papers.map((v,i)=>bar(Multiverse.PAPER_BINS[i],v,n)).join('')}<p class="small-note">ゲーム内の採択論文数。実際の修了者統計とは別です。</p></section>
@@ -238,7 +273,7 @@
     syncEventDialog();root.innerHTML=state?(introVisible()?initialReport():gameplay()):landing();
     if(credits){animateCredits();scheduleCredits();}else scheduleAuto();
   }
-  function start(awareness){closeCredits();stopAuto();cohortResult=null;runSummary=null;introReopened=false;state=DoctoralGame.makeGame(awareness);state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);}
+  function start(awareness){closeCredits();stopAuto();cohortResult=null;finalBenchmark=null;runSummary=null;introReopened=false;state=DoctoralGame.makeGame(awareness);state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);}
   function download(){if(!state)return;const blob=new Blob([JSON.stringify({note:'Doctoral Life prototype / all scenario probabilities are hypothetical',exported:new Date().toISOString(),state},null,2)],{type:'application/json'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=`doctoral-life-${state.seed}.json`;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1500)}
   root.addEventListener('click',e=>{const button=e.target.closest('[data-do]');if(!button)return;const what=button.dataset.do;
     if(what==='start'){start(button.dataset.awareness);return}
@@ -247,8 +282,8 @@
     if(what==='intro-next'&&state){introReopened=false;state.introSeen=true;save();render();window.scrollTo(0,0);return}
     if(what==='close'||what==='close-overlay'){if(what==='close-overlay'&&e.target!==button)return;dialog=false;render();return}
     if(what==='export'){download();return}
-    if(what==='new'){if(state&&!window.confirm('現在の進行状況を破棄して新しい人生を引きますか？（必要なら先に記録を保存）'))return;closeCredits();stopAuto();cohortResult=null;runSummary=null;introReopened=false;state=null;save();render();return}
-    if(what==='replay'){if(!state)return;closeCredits();stopAuto();cohortResult=null;runSummary=null;introReopened=false;state=DoctoralGame.makeGame(state.awareness,state.seed,randomEpisodeSeed());state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);return}
+    if(what==='new'){if(state&&!window.confirm('現在の進行状況を破棄して新しい人生を引きますか？（必要なら先に記録を保存）'))return;closeCredits();stopAuto();cohortResult=null;finalBenchmark=null;runSummary=null;introReopened=false;state=null;save();render();return}
+    if(what==='replay'){if(!state)return;closeCredits();stopAuto();cohortResult=null;finalBenchmark=null;runSummary=null;introReopened=false;state=DoctoralGame.makeGame(state.awareness,state.seed,randomEpisodeSeed());state.introSeen=false;selectedAction='research';save();render();window.scrollTo(0,0);return}
     if(!state)return;
     if(what==='cohort-run'){stopAuto();closeCredits();dialog=false;
       try{cohortResult=Multiverse.run(state,randomEpisodeSeed());render();}

@@ -12,7 +12,7 @@ const Multiverse=(()=>{
     const result={sampleSize:count,profileSeed:original.seed,batchSeed:batchSeed>>>0,
       outcomes:{standard:0,extended:0,withoutDegree:0},duration:{36:0,48:0},
       papers:[0,0,0,0,0],dc:{DC1:{applied:0,accepted:0},DC2:{applied:0,accepted:0}},
-      loans:[],publicationCounts:[],samples:[]};
+      loans:[],cashBalances:[],publicationCounts:[],samples:[]};
     for(let i=0;i<count;i++){
       const episodeSeed=chooseSeed(batchSeed,i);
       const s=DoctoralGame.makeGame(initial.awareness,initial.seed,episodeSeed);
@@ -26,17 +26,17 @@ const Multiverse=(()=>{
       result.outcomes[kind]++;
       result.duration[s.outcome.months]++;
       result.papers[Math.min(4,s.papers)]++;
-      result.loans.push(s.debt);result.publicationCounts.push(s.papers);
+      result.loans.push(s.debt);result.cashBalances.push(s.cash);result.publicationCounts.push(s.papers);
       for(const type of ['DC1','DC2']){
         if(s.applications[type])result.dc[type].applied++;
         if(s.fellowship?.type===type)result.dc[type].accepted++;
       }
-      result.samples.push({episodeSeed,papers:s.papers,debt:s.debt,months:s.outcome.months,outcome:kind});
+      result.samples.push({episodeSeed,papers:s.papers,cash:s.cash,debt:s.debt,months:s.outcome.months,outcome:kind});
     }
     result.graduated=result.outcomes.standard+result.outcomes.extended;
     result.averagePapers=result.publicationCounts.reduce((a,b)=>a+b,0)/count;
     result.medianPapers=median(result.publicationCounts);
-    result.medianDebt=median(result.loans);
+    result.medianDebt=median(result.loans);result.medianCash=median(result.cashBalances);
     return result;
   }
   return {TRIALS,PAPER_BINS,chooseSeed,run};
