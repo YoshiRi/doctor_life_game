@@ -35,3 +35,7 @@ Build a browser-based, Japanese-language life simulation of entering and progres
 
 ## Scope reminder
 This prototype is not yet a validated statistical simulation. Unless explicitly supported by a documented dataset, its numeric outcomes are illustrative.
+
+## Auto-mode implementation
+- src/auto.js owns the pure, deterministic decision policy and a single-step interpreter. The UI in src/ui.js owns one cancellable timer (no background loops). Never consume the simulation RNG just to decide an automatic UI option.
+- Progress-only mode repeats the selected monthly action and waits for multi-choice decisions/available submission; single-choice acknowledgments proceed automatically. Full auto makes choices and submits completed papers. Always stop at game end and avoid persisting running timers/mode across reloads.
